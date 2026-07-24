@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Match Cup</title>
+    <style>
+        * { margin: 0; padding: 0; touch-action: none; user-select: none; }
+        body {
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            overflow: hidden;
+        }
+        #game-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 600px;
+            max-height: 850px;
+        }
+        canvas {
+            background: #2e7d32;
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+            border: 4px solid #fff;
+        }
+        #menu {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 10;
+            color: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        #menu h1 {
+            font-size: 2.6rem;
+            margin-bottom: 4px;
+            background: linear-gradient(45deg, #f7971e, #ffd200);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        #menu .sub { font-size: 1rem; color: #aaa; margin-bottom: 12px; }
+        .players {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            max-width: 340px;
+            margin: 8px 0;
+        }
+        .player-card {
+            background: rgba(255,255,255,0.08);
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 50px;
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .player-card:active { transform: scale(0.94); background: rgba(255,215,0,0.2); border-color: gold; }
+        .player-card .emoji { font-size: 1.8rem; display: block; }
+        .player-card.selected { border-color: #ffd700; background: rgba(255,215,0,0.15); }
+        .difficulty {
+            display: flex;
+            gap: 8px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .diff-btn {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 30px;
+            padding: 6px 16px;
+            color: #fff;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .diff-btn.active { border-color: #ffd700; background: rgba(255,215,0,0.2); }
+        .diff-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        #startBtn {
+            background: #4caf50;
+            border: none;
+            color: #fff;
+            padding: 12px 40px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 20px rgba(76,175,80,0.3);
+        }
+        #startBtn:active { transform: scale(0.94); }
+        #startBtn:disabled { opacity: 0.4; transform: none; }
+        #scoreboard {
+            position: absolute;
+            top: 12px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 16px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            z-index: 5;
+            text-shadow: 0 2px 12px black;
+            pointer-events: none;
+            box-sizing: border-box;
+        }
+        #scoreboard div { background: rgba(0,0,0,0.5); padding: 4px 14px; border-radius: 30px; }
+        #timer {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            color: #ffd700;
+            padding: 4px 20px;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            z-index: 5;
+            pointer-events: none;
+        }
+        #winner {
+            position: absolute;
+            top: 30%;
+            left: 0; width: 100%;
+            text-align: center;
+            color: gold;
+            font-size: 2.8rem;
+            text-shadow: 0 0 40px black;
+            z-index: 20;
+            pointer-events: none;
+            display: none;
+            background: rgba(0,0,0,0.7);
+            padding: 24px 0;
+        }
+        #winner .cup { font-size: 4rem; display: block; }
+        #restartBtn {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f7971e;
+            border: none;
+            color: #1a1a2e;
+            font-weight: bold;
+            padding: 12px 32px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            z-index: 30;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+            display: none;
+            cursor: pointer;
+        }
+        #restartBtn:active { transform: translateX(-50%) scale(0.94); }
+        #menuBtn {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: #fff;
+            font-weight: bold;
+            padding: 10px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            z-index: 30;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            display: none;
+            cursor: pointer;
+        }
+        #menuBtn:active { transform: translateX(-50%) scale(0.94); }
+        #matchScore {
+            position: absolute;
+            bottom: 120px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-size: 0.9rem;
+            z-index: 5;
+            pointer-events: none;
+            background: rgba(0,0,0,0.3);
+            padding: 4px 0;
+        }
+        #joystick-area {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            border-radius: 60px;
+            background: rgba(255,255,255,0.12);
+            border: 3px solid rgba(255,255,255,0.25);
+            z-index: 8;
+            display: none;
+        }
+        #joystick-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.4);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        #kick-btn {
+            position: absolute;
+            bottom: 30px;
+            right: 100px;
+            width: 70px;
+            height: 70px;
+            border-radius: 35px;
+            background: rgba(255,215,0,0.25);
+            border: 4px solid rgba(255,215,0,0.5);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            z-index: 8;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            transition: 0.1s;
+            box-shadow: 0 0 30px rgba(255,215,0,0.15);
+            text-align: center;
+            line-height: 1.2;
+        }
+        #kick-btn:active { transform: scale(0.92); background: rgba(255,215,0,0.5); }
+        #tackle-btn {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            width: 70px;
+            height: 70px;
+            border-radius: 35px;
+            background: rgba(0,100,255,0.25);
+            border: 4px solid rgba(0,100,255,0.5);
+            color: white;
+            font-size: 0.6rem;
+            font-weight: bold;
+            z-index: 8;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            transition: 0.1s;
+            box-shadow: 0 0 30px rgba(0,100,255,0.15);
+            text-align: center;
+            line-height: 1.2;
+        }
+        #tackle-btn:active { transform: scale(0.92); background: rgba(0,100,255,0.5); }
+        #resetBtn {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: rgba(255,0,0,0.25);
+            border: 1px solid rgba(255,0,0,0.4);
+            color: #ff6b6b;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 15;
+            transition: 0.2s;
+        }
+        #resetBtn:active { transform: scale(0.92); background: rgba(255,0,0,0.4); }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+<div id="game-wrapper">
+    <canvas id="gameCanvas" width="600" height="800"></canvas>
+
+    <div id="menu">
+        <button id="resetBtn">🗑️ Сброс</button>
+        <h1>⚽ MATCH CUP</h1>
+        <div class="sub">Шаг 1: Выбери игрока</div>
+        <div class="players">
+            <div class="player-card" data-player="0"><span class="emoji">⚔️</span>Хабиб</div>
+            <div class="player-card" data-player="1"><span class="emoji">⚔️</span>Салаудин</div>
+            <div class="player-card" data-player="2"><span class="emoji">🛡️</span>Шамиль Рб</div>
+            <div class="player-card" data-player="3"><span class="emoji">🛡️</span>Шамиль Jr</div>
+        </div>
+        <div style="font-size:0.8rem; color:#aaa; margin:4px 0;">Шаг 2: Выбери сложность</div>
+        <div class="difficulty">
+            <button class="diff-btn" data-diff="easy" disabled>🟢 Лёгкий</button>
+            <button class="diff-btn" data-diff="medium" disabled>🟡 Средний</button>
+            <button class="diff-btn" data-diff="hard" disabled>🔴 Сложный</button>
+            <button class="diff-btn" data-diff="extreme" disabled>🔥 Хардкор</button>
+        </div>
+        <button id="startBtn" disabled>▶️ НАЧАТЬ МАТЧ</button>
+    </div>
+
+    <div id="scoreboard">
+        <div id="scoreA">0</div>
+        <div id="scoreB">0</div>
+    </div>
+    <div id="timer">⏱️ 1:00</div>
+    <div id="matchScore">⚽ Счёт матча: 0 : 0</div>
+    <div id="winner"><span class="cup">🏆</span>ПОБЕДА!</div>
+    <button id="restartBtn">🔁 Играть снова</button>
+    <button id="menuBtn">🏠 В меню</button>
+
+    <div id="joystick-area"><div id="joystick-knob"></div></div>
+    <div id="kick-btn">⚽<br>Удар</div>
+    <div id="tackle-btn">⚔️<br>Отбор</div>
+</div>
+
+<script>
+    // ============================================================
+    //  MATCH CUP — ПОЛНАЯ ИГРА (С НУЛЯ, БЕЗ БАГОВ)
+    // ============================================================
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = 600, H = 800;
+    canvas.width = W; canvas.height = H;
+
+    // --- ЭЛЕМЕНТЫ ---
+    const menu = document.getElementById('menu');
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const menuBtn = document.getElementById('menuBtn');
+    const winnerDiv = document.getElementById('winner');
+    const scoreADiv = document.getElementById('scoreA');
+    const scoreBDiv = document.getElementById('scoreB');
+    const timerDiv = document.getElementById('timer');
+    const matchScoreDiv = document.getElementById('matchScore');
+    const joystickArea = document.getElementById('joystick-area');
+    const joystickKnob = document.getElementById('joystick-knob');
+    const kickBtn = document.getElementById('kick-btn');
+    const tackleBtn = document.getElementById('tackle-btn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    // --- СОСТОЯНИЕ ---
+    let selectedPlayer = -1;
+    let selectedDifficulty = 'easy';
+    let gameState = 'menu'; // menu | playing | ended
+    let matchActive = false;
+    let timerInterval = null;
+    let timeLeft = 60;
+    let scoreA = 0, scoreB = 0;
+    let winsA = 0, winsB = 0;
+    const GOAL_LIMIT = 3;
+
+    // --- ДЖОЙСТИК ---
+    let joystickX = 0, joystickY = 0;
+    let joystickActive = false;
+    let joystickTouchId = null;
+
+    // --- КНОПКИ ---
+    let kickPressed = false;
+    let tacklePressed = false;
+
+    // --- ИГРОКИ ---
+    let allPlayers = [];
+    let ball = { x: W/2, y: H/2, r: 11, vx: 0, vy: 0 };
+    let ballOwner = null;
+
+    // --- ВОРОТА ---
+    const GOAL_H = 60;
+    const goalA = { x: 25, y: H/2 - GOAL_H/2, w: 18, h: GOAL_H };
+    const goalB = { x: W-43, y: H/2 - GOAL_H/2, w: 18, h: GOAL_H };
+
+    // --- СОХРАНЕНИЕ ---
+    function loadSave() {
+        try {
+            const data = localStorage.getItem('matchcup_save');
+            if (data) return JSON.parse(data);
+        } catch(e) {}
+        return { wins: 0, goals: 0, stars: 1 };
+    }
+    let save = loadSave();
+
+    // --- СЛОЖНОСТЬ ---
+    const diffStars = { easy: 2, medium: 3, hard: 4, extreme: 5 };
+    const diffSpeed = { easy: 1.0, medium: 1.3, hard: 1.7, extreme: 2.2 };
+    const diffPower = { easy: 2.5, medium: 3.5, hard: 4.5, extreme: 5.5 };
+    const diffTackle = { easy: 0.2, medium: 0.4, hard: 0.6, extreme: 0.8 };
+
+    // --- ИНИЦИАЛИЗАЦИЯ ИГРОКОВ ---
+    function initPlayers() {
+        const playerStars = save.stars || 1;
+        const botStars = diffStars[selectedDifficulty] || 2;
+        const botSpeed = diffSpeed[selectedDifficulty] || 1.0;
+        const botPower = diffPower[selectedDifficulty] || 2.5;
+        const botBonus = 1 + (botStars - 1) * 0.12;
+        const playerBonus = 1 + (playerStars - 1) * 0.15;
+
+        let a1role = 'field', a2role = 'goalkeeper';
+        let b1role = 'field', b2role = 'goalkeeper';
+        if (selectedPlayer === 1) { a1role = 'goalkeeper'; a2role = 'field'; }
+        if (selectedPlayer === 3) { b1role = 'goalkeeper'; b2role = 'field'; }
+
+        const teamA = [
+            { id: 0, name: 'Хабиб', color: '#d32f2f', x: 200, y: 400, r: 22, isPlayer: (selectedPlayer === 0), team: 'A', isGoalkeeper: (a1role === 'goalkeeper'), speed: 1.6 * (selectedPlayer === 0 ? playerBonus : botBonus), power: 3.5 * (selectedPlayer === 0 ? playerBonus : botBonus) },
+            { id: 1, name: 'Салаудин', color: '#e57373', x: 60, y: 400, r: 22, isPlayer: (selectedPlayer === 1), team: 'A', isGoalkeeper: (a2role === 'goalkeeper'), speed: 1.6 * (selectedPlayer === 1 ? playerBonus : botBonus), power: 3.5 * (selectedPlayer === 1 ? playerBonus : botBonus) }
+        ];
+        const teamB = [
+            { id: 2, name: 'Шамиль Рб', color: '#1976d2', x: 400, y: 400, r: 22, isPlayer: (selectedPlayer === 2), team: 'B', isGoalkeeper: (b1role === 'goalkeeper'), speed: 1.6 * (selectedPlayer === 2 ? playerBonus : botBonus), power: 3.5 * (selectedPlayer === 2 ? playerBonus : botBonus) },
+            { id: 3, name: 'Шамиль Jr', color: '#64b5f6', x: W-60, y: 400, r: 22, isPlayer: (selectedPlayer === 3), team: 'B', isGoalkeeper: (b2role === 'goalkeeper'), speed: 1.6 * (selectedPlayer === 3 ? playerBonus : botBonus), power: 3.5 * (selectedPlayer === 3 ? playerBonus : botBonus) }
+        ];
+
+        allPlayers = [...teamA, ...teamB];
+        allPlayers.forEach(p => {
+            if (p.isGoalkeeper && !p.isPlayer) {
+                p.x = (p.team === 'A') ? 55 : W-55;
+                p.y = H/2;
+            }
+            if (p.isPlayer) {
+                p.color = '#ffd700';
+                if (p.isGoalkeeper) {
+                    p.isGoalkeeper = false;
+                    p.x = 200 + (p.team === 'A' ? 0 : 200);
+                    p.y = 400;
+                }
+            }
+            if (!p.isPlayer) {
+                p.targetX = p.x + (Math.random()-0.5)*100;
+                p.targetY = p.y + (Math.random()-0.5)*100;
+            }
+        });
+        ballOwner = null;
+        resetBall();
+    }
+
+    function resetBall() {
+        ball.x = W/2 + (Math.random()*80-40);
+        ball.y = H/2 + (Math.random()*80-40);
+        ball.vx = 0;
+        ball.vy = 0;
+        ballOwner = null;
+    }
+
+    // --- ОТБОР ---
+    function performTackle(player) {
+        if (!player) return;
+        let target = null;
+        let minDist = 80;
+        for (let p of allPlayers) {
+            if (p === player || p.team === player.team) continue;
+            if (p === ballOwner) {
+                const dx = player.x - p.x;
+                const dy = player.y - p.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < minDist) {
+                    minDist = dist;
+                    target = p;
+                }
+            }
+        }
+        if (target) {
+            const chance = 0.3 + (save.stars || 1) * 0.05 - diffTackle[selectedDifficulty] * 0.2;
+            if (Math.random() < chance) {
+                ballOwner = player;
+                ball.x = player.x + 20;
+                ball.y = player.y;
+                ball.vx = 0;
+                ball.vy = 0;
+            }
+        }
+    }
+
+    // --- БОТЫ ---
+    function updateBot(p, isTeamA) {
+        const dx = ball.x - p.x;
+        const dy = ball.y - p.y;
+        const distToBall = Math.sqrt(dx*dx + dy*dy);
+
+        let targetX = p.targetX, targetY = p.targetY;
+
+        if (p.isGoalkeeper) {
+            const goal = isTeamA ? goalA : goalB;
+            const goalX = isTeamA ? 30 : W-30;
+            if (distToBall < 200 && ball.x > goal.x - 30 && ball.x < goal.x + goal.w + 30) {
+                const offset = 60 + Math.random() * 30;
+                targetX = isTeamA ? goal.x + goal.w + offset : goal.x - offset;
+                targetY = Math.max(goal.y + 15, Math.min(goal.y + goal.h - 15, ball.y));
+            } else {
+                targetX = goalX;
+                targetY = H/2 + (Math.random()-0.5)*30;
+            }
+        } else {
+            if (p === ballOwner) {
+                const targetGoalX = isTeamA ? W-40 : 20;
+                const targetGoalY = H/2 + (Math.random()-0.5)*60;
+                targetX = targetGoalX;
+                targetY = targetGoalY;
+                if (Math.random() < 0.02 && distToBall < 40) {
+                    const kx = targetGoalX - ball.x;
+                    const ky = targetGoalY - ball.y;
+                    const kd = Math.sqrt(kx*kx + ky*ky) || 1;
+                    const power = p.power * (selectedDifficulty === 'extreme' ? 1.4 : 1.0);
+                    ball.vx = (kx / kd) * power;
+                    ball.vy = (ky / kd) * power;
+                    ballOwner = null;
+                    return;
+                }
+            } else {
+                if (distToBall < 300) {
+                    targetX = ball.x + (Math.random()-0.5) * 80;
+                    targetY = ball.y + (Math.random()-0.5) * 80;
+                } else {
+                    targetX = ball.x;
+                    targetY = ball.y;
+                }
+                if (ballOwner && distToBall < 50 && Math.random() < diffTackle[selectedDifficulty] * 0.5) {
+                    ballOwner = p;
+                    ball.x = p.x + 20;
+                    ball.y = p.y;
+                    ball.vx = 0;
+                    ball.vy = 0;
+                }
+            }
+        }
+
+        const dxT = targetX - p.x;
+        const dyT = targetY - p.y;
+        const distT = Math.sqrt(dxT*dxT + dyT*dyT);
+        const spd = (p.speed || 1.6) * (0.9 + Math.random() * 0.2);
+
+        if (distT > 4) {
+            const move = spd / distT;
+            p.x += dxT * move;
+            p.y += dyT * move;
+        } else {
+            if (!p.isGoalkeeper && p !== ballOwner) {
+                p.targetX = 100 + Math.random() * 400;
+                p.targetY = 100 + Math.random() * 500;
+            }
+        }
+
+        if (p.isGoalkeeper) {
+            const goal = isTeamA ? goalA : goalB;
+            p.x = Math.max(goal.x - 60, Math.min(goal.x + goal.w + 60, p.x));
+            p.y = Math.max(goal.y + 10, Math.min(goal.y + goal.h - 10, p.y));
+        } else {
+            p.x = Math.max(35, Math.min(W-35, p.x));
+            p.y = Math.max(35, Math.min(H-35, p.y));
+        }
+    }
+
+    // --- ОБНОВЛЕНИЕ ---
+    function update() {
+        if (gameState !== 'playing' || !matchActive) return;
+
+        const myPlayer = allPlayers.find(p => p.isPlayer === true);
+        const speedBonus = 1 + (save.stars - 1) * 0.15;
+
+        // Джойстик
+        if (myPlayer && joystickActive) {
+            const jx = joystickX, jy = joystickY;
+            const dist = Math.sqrt(jx*jx + jy*jy);
+            if (dist > 0.1) {
+                const speed = 8 * speedBonus * Math.min(1, dist * 2);
+                myPlayer.x += (jx / dist) * speed;
+                myPlayer.y += (jy / dist) * speed;
+            }
+        }
+
+        // Ведение мяча
+        if (myPlayer && ballOwner === myPlayer) {
+            ball.x = myPlayer.x + 20;
+            ball.y = myPlayer.y;
+            ball.vx = 0;
+            ball.vy = 0;
+        }
+
+        allPlayers.forEach(p => {
+            if (!p.isGoalkeeper) {
+                p.x = Math.max(35, Math.min(W-35, p.x));
+                p.y = Math.max(35, Math.min(H-35, p.y));
+            }
+        });
+
+        // Боты
+        allPlayers.filter(p => !p.isPlayer).forEach(p => {
+            updateBot(p, p.team === 'A');
+        });
+
+        if (ballOwner && !ballOwner.isPlayer) {
+            ball.x = ballOwner.x + 20;
+            ball.y = ballOwner.y;
+            ball.vx = 0;
+            ball.vy = 0;
+        }
+
+        // Удар
+        if (myPlayer && kickPressed && ballOwner === myPlayer) {
+            const angle = Math.atan2(joystickY, joystickX);
+            const power = 4 + (save.stars || 1) * 1.5;
+            ball.vx = Math.cos(angle) * power;
+            ball.vy = Math.sin(angle) * power;
+            ballOwner = null;
+            kickPressed = false;
+        }
+
+        // Отбор
+        if (myPlayer && tacklePressed) {
+            performTackle(myPlayer);
+            tacklePressed = false;
+        }
+
+        // Физика мяча
+        if (!ballOwner) {
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+            ball.vx *= 0.98;
+            ball.vy *= 0.98;
+            if (Math.abs(ball.vx) < 0.1) ball.vx = 0;
+            if (Math.abs(ball.vy) < 0.1) ball.vy = 0;
+        }
+
+        // Столкновения с игроками
+        for (let p of allPlayers) {
+            const dx = ball.x - p.x;
+            const dy = ball.y - p.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < ball.r + p.r && ballOwner !== p) {
+                const angle = Math.atan2(dy, dx);
+                const overlap = (ball.r + p.r - dist) * 0.5;
+                ball.x += Math.cos(angle) * overlap;
+                ball.y += Math.sin(angle) * overlap;
+                const force = (p.isPlayer ? 4.0 * speedBonus : 3.5) + Math.random()*2;
+                ball.vx += Math.cos(angle) * force;
+                ball.vy += Math.sin(angle) * force;
+                if (!ballOwner) {
+                    ballOwner = p;
+                    ball.vx *= 0.5;
+                    ball.vy *= 0.5;
+                }
+            }
+        }
+
+        // Скруглённые углы
+        const cr = 35;
+        if (ball.x < cr && ball.y < cr) {
+            const dx = ball.x - cr, dy = ball.y - cr;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < cr - ball.r) {
+                const angle = Math.atan2(dy, dx);
+                ball.x = cr + Math.cos(angle) * (cr - ball.r);
+                ball.y = cr + Math.sin(angle) * (cr - ball.r);
+                const nx = Math.cos(angle), ny = Math.sin(angle);
+                const dot = ball.vx * nx + ball.vy * ny;
+                if (dot < 0) { ball.vx -= 2*dot*nx; ball.vy -= 2*dot*ny; ball.vx *= 0.7; ball.vy *= 0.7; }
+            }
+        } else if (ball.x > W-cr && ball.y < cr) {
+            const dx = ball.x - (W-cr), dy = ball.y - cr;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < cr - ball.r) {
+                const angle = Math.atan2(dy, dx);
+                ball.x = W-cr + Math.cos(angle)*(cr-ball.r);
+                ball.y = cr + Math.sin(angle)*(cr-ball.r);
+                const nx = Math.cos(angle), ny = Math.sin(angle);
+                const dot = ball.vx * nx + ball.vy * ny;
+                if (dot < 0) { ball.vx -= 2*dot*nx; ball.vy -= 2*dot*ny; ball.vx *= 0.7; ball.vy *= 0.7; }
+            }
+        } else if (ball.x < cr && ball.y > H-cr) {
+            const dx = ball.x - cr, dy = ball.y - (H-cr);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < cr - ball.r) {
+                const angle = Math.atan2(dy, dx);
+                ball.x = cr + Math.cos(angle)*(cr-ball.r);
+                ball.y = H-cr + Math.sin(angle)*(cr-ball.r);
+                const nx = Math.cos(angle), ny = Math.sin(angle);
+                const dot = ball.vx * nx + ball.vy * ny;
+                if (dot < 0) { ball.vx -= 2*dot*nx; ball.vy -= 2*dot*ny; ball.vx *= 0.7; ball.vy *= 0.7; }
+            }
+        } else if (ball.x > W-cr && ball.y > H-cr) {
+            const dx = ball.x - (W-cr), dy = ball.y - (H-cr);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < cr - ball.r) {
+                const angle = Math.atan2(dy, dx);
+                ball.x = W-cr + Math.cos(angle)*(cr-ball.r);
+                ball.y = H-cr + Math.sin(angle)*(cr-ball.r);
+                const nx = Math.cos(angle), ny = Math.sin(angle);
+                const dot = ball.vx * nx + ball.vy * ny;
+                if (dot < 0) { ball.vx -= 2*dot*nx; ball.vy -= 2*dot*ny; ball.vx *= 0.7; ball.vy *= 0.7; }
+            }
+        }
+
+        // Стенки
+        if (ball.y < ball.r + 5) { ball.y = ball.r + 5; ball.vy *= -0.6; }
+        if (ball.y > H - ball.r - 5) { ball.y = H - ball.r - 5; ball.vy *= -0.6; }
+        if (ball.x < ball.r + 5 && !(ball.y > goalA.y && ball.y < goalA.y + goalA.h)) {
+            ball.x = ball.r + 5; ball.vx *= -0.6;
+        }
+        if (ball.x > W - ball.r - 5 && !(ball.y > goalB.y && ball.y < goalB.y + goalB.h)) {
+            ball.x = W - ball.r - 5; ball.vx *= -0.6;
+        }
+
+        // Голы
+        if (ball.x < goalA.x + goalA.w && ball.y > goalA.y + 5 && ball.y < goalA.y + goalA.h - 5) {
+            if (!ballOwner || ballOwner.team !== 'A') {
+                scoreB++;
+                updateScoreDisplay();
+                if (scoreB >= GOAL_LIMIT) { endMatch('B'); return; }
+                resetBall();
+            }
+        }
+        if (ball.x > goalB.x - goalB.w && ball.y > goalB.y + 5 && ball.y < goalB.y + goalB.h - 5) {
+            if (!ballOwner || ballOwner.team !== 'B') {
+                scoreA++;
+                updateScoreDisplay();
+                if (scoreA >= GOAL_LIMIT) { endMatch('A'); return; }
+                resetBall();
+            }
+        }
+
+        ball.x = Math.max(ball.r, Math.min(W - ball.r, ball.x));
+        ball.y = Math.max(ball.r, Math.min(H - ball.r, ball.y));
+    }
+
+    // --- ОТРИСОВКА ---
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+        const grad = ctx.createRadialGradient(W/2, H/2, 50, W/2, H/2, 400);
+        grad.addColorStop(0, '#4caf50');
+        grad.addColorStop(1, '#2e7d32');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 3;
+        const r = 35;
+        ctx.beginPath();
+        ctx.moveTo(r, 5);
+        ctx.lineTo(W-r, 5);
+        ctx.quadraticCurveTo(W-5, 5, W-5, r);
+        ctx.lineTo(W-5, H-r);
+        ctx.quadraticCurveTo(W-5, H-5, W-r, H-5);
+        ctx.lineTo(r, H-5);
+        ctx.quadraticCurveTo(5, H-5, 5, H-r);
+        ctx.lineTo(5, r);
+        ctx.quadraticCurveTo(5, 5, r, 5);
+        ctx.closePath();
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8,12]);
+        ctx.beginPath();
+        ctx.moveTo(W/2, 5);
+        ctx.lineTo(W/2, H-5);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(W/2, H/2, 60, 0, Math.PI*2);
+        ctx.stroke();
+
+        // Ворота A
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(goalA.x, goalA.y, goalA.w, goalA.h);
+        ctx.beginPath();
+        ctx.moveTo(goalA.x, goalA.y);
+        ctx.lineTo(goalA.x + goalA.w, goalA.y);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(goalA.x, goalA.y, goalA.w, goalA.h);
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < goalA.w; i += 10) {
+            ctx.beginPath();
+            ctx.moveTo(goalA.x + i, goalA.y);
+            ctx.lineTo(goalA.x + i, goalA.y + goalA.h);
+            ctx.stroke();
+        }
+        for (let i = 0; i < goalA.h; i += 10) {
+            ctx.beginPath();
+            ctx.moveTo(goalA.x, goalA.y + i);
+            ctx.lineTo(goalA.x + goalA.w, goalA.y + i);
+            ctx.stroke();
+        }
+
+        // Ворота B
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(goalB.x, goalB.y, goalB.w, goalB.h);
+        ctx.beginPath();
+        ctx.moveTo(goalB.x, goalB.y);
+        ctx.lineTo(goalB.x + goalB.w, goalB.y);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(goalB.x, goalB.y, goalB.w, goalB.h);
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < goalB.w; i += 10) {
+            ctx.beginPath();
+            ctx.moveTo(goalB.x + i, goalB.y);
+            ctx.lineTo(goalB.x + i, goalB.y + goalB.h);
+            ctx.stroke();
+        }
+        for (let i = 0; i < goalB.h; i += 10) {
+            ctx.beginPath();
+            ctx.moveTo(goalB.x, goalB.y + i);
+            ctx.lineTo(goalB.x + goalB.w, goalB.y + i);
+            ctx.stroke();
+        }
+
+        // Игроки
+        for (let p of allPlayers) {
+            const isMy = p.isPlayer;
+            ctx.shadowColor = isMy ? 'rgba(255,215,0,0.8)' : 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = isMy ? 30 : 8;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+            ctx.fillStyle = p.color;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = isMy ? 'gold' : '#222';
+            ctx.lineWidth = isMy ? 4 : 2;
+            ctx.stroke();
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = 'black';
+            const starStr = isMy ? '⭐'.repeat(save.stars || 1) : '⭐'.repeat(diffStars[selectedDifficulty] || 2);
+            const role = p.isGoalkeeper ? '🧤' : '⚡';
+            ctx.fillText(p.name + ' ' + starStr + ' ' + role, p.x, p.y - p.r - 8);
+            ctx.shadowBlur = 0;
+            if (p === ballOwner) {
+                ctx.strokeStyle = 'rgba(255,255,0,0.5)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r + 6, 0, Math.PI*2);
+                ctx.stroke();
+            }
+        }
+
+        // Мяч
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(ball.x-3, ball.y-3, 4, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fill();
+    }
+
+    // --- ТАЙМЕР И МАТЧ ---
+    function startMatch() {
+        if (matchActive) return;
+        matchActive = true;
+        gameState = 'playing';
+        timeLeft = 60;
+        scoreA = 0;
+        scoreB = 0;
+        updateScoreDisplay();
+        timerDiv.innerText = '⏱️ 1:00';
+        winnerDiv.style.display = 'none';
+        restartBtn.style.display = 'none';
+        menuBtn.style.display = 'none';
+        resetBall();
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            timerDiv.innerText = `⏱️ ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                endMatch(null);
+            }
+        }, 1000);
+    }
+
+    function endMatch(winner) {
+        matchActive = false;
+        gameState = 'ended';
+        if (winner === 'A') {
+            winsA++;
+            winnerDiv.innerHTML = `<span class="cup">🏆</span> Победа команды А!`;
+        } else if (winner === 'B') {
+            winsB++;
+            winnerDiv.innerHTML = `<span class="cup">🏆</span> Победа команды Б!`;
+        } else {
+            if (scoreA > scoreB) {
+                winsA++;
+                winnerDiv.innerHTML = `<span class="cup">🏆</span> Победа команды А!`;
+            } else if (scoreB > scoreA) {
+                winsB++;
+                winnerDiv.innerHTML = `<span class="cup">🏆</span> Победа команды Б!`;
+            } else {
+                winnerDiv.innerHTML = `<span class="cup">🤝</span> Ничья!`;
+            }
+        }
+        winnerDiv.style.display = 'block';
+        restartBtn.style.display = 'block';
+        menuBtn.style.display = 'block';
+        // Сохраняем победы
+        save.wins = (save.wins || 0) + (winner === 'A' ? 1 : winner === 'B' ? 1 : 0);
+        localStorage.setItem('matchcup_save', JSON.stringify(save));
+    }
+
+    function updateScoreDisplay() {
+        scoreADiv.innerText = scoreA;
+        scoreBDiv.innerText = scoreB;
+        matchScoreDiv.innerText = `⚽ Счёт матча: ${scoreA} : ${scoreB}`;
+    }
+
+    // --- ЦИКЛ ---
+    function loop() {
+        update();
+        draw();
+        requestAnimationFrame(loop);
+    }
+
+    // --- СОБЫТИЯ МЕНЮ ---
+    document.querySelectorAll('.player-card').forEach(el => {
+        el.addEventListener('click', function() {
+            document.querySelectorAll('.player-card').forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedPlayer = parseInt(this.dataset.player);
+            startBtn.disabled = false;
+            document.querySelectorAll('.diff-btn').forEach(b => b.disabled = false);
+        });
+    });
+
+    document.querySelectorAll('.diff-btn').forEach(el => {
+        el.addEventListener('click', function() {
+            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedDifficulty = this.dataset.diff;
+        });
+    });
+
+    startBtn.addEventListener('click', function() {
+        if (selectedPlayer === -1) return;
+        menu.style.display = 'none';
+        joystickArea.style.display = 'block';
+        kickBtn.style.display = 'flex';
+        tackleBtn.style.display = 'flex';
+        initPlayers();
+        startMatch();
+    });
+
+    resetBtn.addEventListener('click', function() {
+        if (confirm('Сбросить весь прогресс?')) {
+            localStorage.removeItem('matchcup_save');
+            save = { wins: 0, goals: 0, stars: 1 };
+            alert('Прогресс сброшен!');
+        }
+    });
+
+    restartBtn.addEventListener('click', function() {
+        winnerDiv.style.display = 'none';
+        restartBtn.style.display = 'none';
+        menuBtn.style.display = 'none';
+        initPlayers();
+        startMatch();
+    });
+
+    menuBtn.addEventListener('click', function() {
+        winnerDiv.style.display = 'none';
+        restartBtn.style.display = 'none';
+        menuBtn.style.display = 'none';
+        joystickArea.style.display = 'none';
+        kickBtn.style.display = 'none';
+        tackleBtn.style.display = 'none';
+        menu.style.display = 'flex';
+        gameState = 'menu';
+        matchActive = false;
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    });
+
+    // --- ДЖОЙСТИК ---
+    joystickArea.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        joystickTouchId = touch.identifier;
+        joystickActive = true;
+        updateJoystick(touch);
+    }, { passive: false });
+
+    joystickArea.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (let touch of e.touches) {
+            if (touch.identifier === joystickTouchId) updateJoystick(touch);
+        }
+    }, { passive: false });
+
+    joystickArea.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        joystickActive = false;
+        joystickX = 0; joystickY = 0;
+        joystickKnob.style.transform = 'translate(-50%, -50%)';
+        joystickTouchId = null;
+    }, { passive: false });
+
+    joystickArea.addEventListener('touchcancel', () => {
+        joystickActive = false;
+        joystickX = 0; joystickY = 0;
+        joystickKnob.style.transform = 'translate(-50%, -50%)';
+        joystickTouchId = null;
+    });
+
+    function updateJoystick(touch) {
+        const rect = joystickArea.getBoundingClientRect();
+        const cx = rect.left + rect.width/2;
+        const cy = rect.top + rect.height/2;
+        const dx = touch.clientX - cx;
+        const dy = touch.clientY - cy;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const maxDist = rect.width/2 - 25;
+        if (dist > maxDist) {
+            const angle = Math.atan2(dy, dx);
+            const nx = Math.cos(angle) * maxDist;
+            const ny = Math.sin(angle) * maxDist;
+            joystickX = nx / maxDist;
+            joystickY = ny / maxDist;
+            joystickKnob.style.transform = `translate(${nx - 25}px, ${ny - 25}px)`;
+        } else {
+            joystickX = dx / maxDist;
+            joystickY = dy / maxDist;
+            joystickKnob.style.transform = `translate(${dx - 25}px, ${dy - 25}px)`;
+        }
+    }
+
+    // --- КНОПКИ ---
+    kickBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        kickPressed = true;
+        kickBtn.style.transform = 'scale(0.92)';
+        kickBtn.style.background = 'rgba(255,215,0,0.5)';
+    }, { passive: false });
+
+    kickBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        kickBtn.style.transform = 'scale(1)';
+        kickBtn.style.background = 'rgba(255,215,0,0.25)';
+    }, { passive: false });
+
+    kickBtn.addEventListener('touchcancel', () => {
+        kickBtn.style.transform = 'scale(1)';
+        kickBtn.style.background = 'rgba(255,215,0,0.25)';
+    });
+
+    tackleBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        tacklePressed = true;
+        tackleBtn.style.transform = 'scale(0.92)';
+        tackleBtn.style.background = 'rgba(0,100,255,0.5)';
+    }, { passive: false });
+
+    tackleBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        tackleBtn.style.transform = 'scale(1)';
+        tackleBtn.style.background = 'rgba(0,100,255,0.25)';
+    }, { passive: false });
+
+    tackleBtn.addEventListener('touchcancel', () => {
+        tackleBtn.style.transform = 'scale(1)';
+        tackleBtn.style.background = 'rgba(0,100,255,0.25)';
+    });
+
+    // --- СТАРТ ---
+    loop();
+</script>
+</body>
+</html>
