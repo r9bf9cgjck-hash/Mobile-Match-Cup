@@ -291,7 +291,6 @@
             transition: 0.2s;
         }
         #resetBtn:active { transform: scale(0.92); background: rgba(255,0,0,0.4); }
-        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -335,7 +334,7 @@
 
 <script>
     // ============================================================
-    //  MATCH CUP — ПОЛНАЯ ИГРА (С НУЛЯ, БЕЗ БАГОВ)
+    //  MATCH CUP — УЛУЧШЕННАЯ ФИЗИКА И УМНЫЙ ИИ
     // ============================================================
 
     const canvas = document.getElementById('gameCanvas');
@@ -362,7 +361,7 @@
     // --- СОСТОЯНИЕ ---
     let selectedPlayer = -1;
     let selectedDifficulty = 'easy';
-    let gameState = 'menu'; // menu | playing | ended
+    let gameState = 'menu';
     let matchActive = false;
     let timerInterval = null;
     let timeLeft = 60;
@@ -383,6 +382,7 @@
     let allPlayers = [];
     let ball = { x: W/2, y: H/2, r: 11, vx: 0, vy: 0 };
     let ballOwner = null;
+    let ballOffset = { x: 0, y: 0 }; // для плавного ведения
 
     // --- ВОРОТА ---
     const GOAL_H = 60;
@@ -404,6 +404,7 @@
     const diffSpeed = { easy: 1.0, medium: 1.3, hard: 1.7, extreme: 2.2 };
     const diffPower = { easy: 2.5, medium: 3.5, hard: 4.5, extreme: 5.5 };
     const diffTackle = { easy: 0.2, medium: 0.4, hard: 0.6, extreme: 0.8 };
+    const diffAggression = { easy: 0.1, medium: 0.3, hard: 0.5, extreme: 0.8 };
 
     // --- ИНИЦИАЛИЗАЦИЯ ИГРОКОВ ---
     function initPlayers() {
@@ -448,6 +449,7 @@
             }
         });
         ballOwner = null;
+        ballOffset = { x: 0, y: 0 };
         resetBall();
     }
 
@@ -457,6 +459,7 @@
         ball.vx = 0;
         ball.vy = 0;
         ballOwner = null;
+        ballOffset = { x: 0, y: 0 };
     }
 
     // --- ОТБОР ---
@@ -480,19 +483,23 @@
             const chance = 0.3 + (save.stars || 1) * 0.05 - diffTackle[selectedDifficulty] * 0.2;
             if (Math.random() < chance) {
                 ballOwner = player;
-                ball.x = player.x + 20;
+                ball.x = player.x + 30;
                 ball.y = player.y;
                 ball.vx = 0;
                 ball.vy = 0;
+                ballOffset = { x: 0, y: 0 };
+                return true;
             }
         }
+        return false;
     }
 
-    // --- БОТЫ ---
+    // --- УМНЫЙ И ЖЁСТКИЙ ИИ ---
     function updateBot(p, isTeamA) {
         const dx = ball.x - p.x;
         const dy = ball.y - p.y;
         const distToBall = Math.sqrt(dx*dx + dy*dy);
+        const aggression = diffAggression[selectedDifficulty] || 0.3;
 
         let targetX = p.targetX, targetY = p.targetY;
 
@@ -509,34 +516,43 @@
             }
         } else {
             if (p === ballOwner) {
+                // Ведёт мяч к воротам
                 const targetGoalX = isTeamA ? W-40 : 20;
                 const targetGoalY = H/2 + (Math.random()-0.5)*60;
                 targetX = targetGoalX;
                 targetY = targetGoalY;
-                if (Math.random() < 0.02 && distToBall < 40) {
+                
+                // Жёсткий удар с высокой вероятностью
+                if (distToBall < 40 && Math.random() < (selectedDifficulty === 'extreme' ? 0.08 : 0.04)) {
                     const kx = targetGoalX - ball.x;
                     const ky = targetGoalY - ball.y;
                     const kd = Math.sqrt(kx*kx + ky*ky) || 1;
-                    const power = p.power * (selectedDifficulty === 'extreme' ? 1.4 : 1.0);
-                    ball.vx = (kx / kd) * power;
-                    ball.vy = (ky / kd) * power;
+                    const power = p.power * (selectedDifficulty === 'extreme' ? 1.6 : 1.2);
+                    ball.vx = (kx / kd) * power * (0.9 + Math.random() * 0.3);
+                    ball.vy = (ky / kd) * power * (0.9 + Math.random() * 0.3);
                     ballOwner = null;
                     return;
                 }
             } else {
-                if (distToBall < 300) {
-                    targetX = ball.x + (Math.random()-0.5) * 80;
-                    targetY = ball.y + (Math.random()-0.5) * 80;
+                // Прессинг — бежит к мячу агрессивно
+                if (distToBall < 350) {
+                    const offset = 30 + aggression * 50;
+                    targetX = ball.x + (Math.random()-0.5) * offset;
+                    targetY = ball.y + (Math.random()-0.5) * offset;
                 } else {
                     targetX = ball.x;
                     targetY = ball.y;
                 }
-                if (ballOwner && distToBall < 50 && Math.random() < diffTackle[selectedDifficulty] * 0.5) {
+                
+                // Жёсткий отбор (высокий шанс перехвата)
+                if (ballOwner && distToBall < 55 && Math.random() < diffTackle[selectedDifficulty] * 0.7) {
                     ballOwner = p;
-                    ball.x = p.x + 20;
+                    ball.x = p.x + 30;
                     ball.y = p.y;
                     ball.vx = 0;
                     ball.vy = 0;
+                    ballOffset = { x: 0, y: 0 };
+                    return;
                 }
             }
         }
@@ -585,12 +601,22 @@
             }
         }
 
-        // Ведение мяча
-        if (myPlayer && ballOwner === myPlayer) {
-            ball.x = myPlayer.x + 20;
-            ball.y = myPlayer.y;
+        // --- ПЛАВНОЕ ВЕДЕНИЕ МЯЧА ---
+        if (ballOwner) {
+            const targetX = ballOwner.x + 28;
+            const targetY = ballOwner.y;
+            // Мяч следует за игроком с плавностью
+            ball.x += (targetX - ball.x) * 0.2;
+            ball.y += (targetY - ball.y) * 0.2;
             ball.vx = 0;
             ball.vy = 0;
+            
+            // Если мяч слишком далеко от владельца — теряем контроль
+            const dx = ball.x - ballOwner.x;
+            const dy = ball.y - ballOwner.y;
+            if (Math.sqrt(dx*dx + dy*dy) > 60) {
+                ballOwner = null;
+            }
         }
 
         allPlayers.forEach(p => {
@@ -605,45 +631,42 @@
             updateBot(p, p.team === 'A');
         });
 
-        if (ballOwner && !ballOwner.isPlayer) {
-            ball.x = ballOwner.x + 20;
-            ball.y = ballOwner.y;
-            ball.vx = 0;
-            ball.vy = 0;
-        }
-
         // Удар
         if (myPlayer && kickPressed && ballOwner === myPlayer) {
             const angle = Math.atan2(joystickY, joystickX);
-            const power = 4 + (save.stars || 1) * 1.5;
-            ball.vx = Math.cos(angle) * power;
-            ball.vy = Math.sin(angle) * power;
+            const power = 5 + (save.stars || 1) * 1.8;
+            ball.vx = Math.cos(angle) * power * (0.9 + Math.random() * 0.2);
+            ball.vy = Math.sin(angle) * power * (0.9 + Math.random() * 0.2);
             ballOwner = null;
             kickPressed = false;
         }
 
         // Отбор
         if (myPlayer && tacklePressed) {
-            performTackle(myPlayer);
-            tacklePressed = false;
+            if (performTackle(myPlayer)) {
+                tacklePressed = false;
+            } else {
+                tacklePressed = false;
+            }
         }
 
-        // Физика мяча
+        // Физика мяча (если ничей)
         if (!ballOwner) {
             ball.x += ball.vx;
             ball.y += ball.vy;
-            ball.vx *= 0.98;
-            ball.vy *= 0.98;
+            ball.vx *= 0.99;
+            ball.vy *= 0.99;
             if (Math.abs(ball.vx) < 0.1) ball.vx = 0;
             if (Math.abs(ball.vy) < 0.1) ball.vy = 0;
         }
 
         // Столкновения с игроками
         for (let p of allPlayers) {
+            if (p === ballOwner) continue;
             const dx = ball.x - p.x;
             const dy = ball.y - p.y;
             const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist < ball.r + p.r && ballOwner !== p) {
+            if (dist < ball.r + p.r) {
                 const angle = Math.atan2(dy, dx);
                 const overlap = (ball.r + p.r - dist) * 0.5;
                 ball.x += Math.cos(angle) * overlap;
@@ -651,10 +674,11 @@
                 const force = (p.isPlayer ? 4.0 * speedBonus : 3.5) + Math.random()*2;
                 ball.vx += Math.cos(angle) * force;
                 ball.vy += Math.sin(angle) * force;
-                if (!ballOwner) {
+                // Перехват мяча с шансом
+                if (!ballOwner && Math.random() < 0.3) {
                     ballOwner = p;
-                    ball.vx *= 0.5;
-                    ball.vy *= 0.5;
+                    ball.vx *= 0.3;
+                    ball.vy *= 0.3;
                 }
             }
         }
@@ -925,7 +949,6 @@
         winnerDiv.style.display = 'block';
         restartBtn.style.display = 'block';
         menuBtn.style.display = 'block';
-        // Сохраняем победы
         save.wins = (save.wins || 0) + (winner === 'A' ? 1 : winner === 'B' ? 1 : 0);
         localStorage.setItem('matchcup_save', JSON.stringify(save));
     }
