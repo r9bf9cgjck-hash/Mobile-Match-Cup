@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Match Cup</title>
+    <title>Match Cup - New Era</title>
     <style>
         * { margin: 0; padding: 0; touch-action: none; user-select: none; }
         body {
@@ -334,7 +334,7 @@
 
 <script>
     // ============================================================
-    //  MATCH CUP — УЛУЧШЕННАЯ ФИЗИКА И УМНЫЙ ИИ
+    //  MATCH CUP - НОВАЯ ЭРА (УЛУЧШЕННАЯ ФИЗИКА И МОДЕЛЬКИ)
     // ============================================================
 
     const canvas = document.getElementById('gameCanvas');
@@ -378,11 +378,10 @@
     let kickPressed = false;
     let tacklePressed = false;
 
-    // --- ИГРОКИ ---
+    // --- ИГРОКИ (С МОДЕЛЬКАМИ) ---
     let allPlayers = [];
-    let ball = { x: W/2, y: H/2, r: 11, vx: 0, vy: 0 };
+    let ball = { x: W/2, y: H/2, r: 10, vx: 0, vy: 0 };
     let ballOwner = null;
-    let ballOffset = { x: 0, y: 0 }; // для плавного ведения
 
     // --- ВОРОТА ---
     const GOAL_H = 60;
@@ -404,7 +403,82 @@
     const diffSpeed = { easy: 1.0, medium: 1.3, hard: 1.7, extreme: 2.2 };
     const diffPower = { easy: 2.5, medium: 3.5, hard: 4.5, extreme: 5.5 };
     const diffTackle = { easy: 0.2, medium: 0.4, hard: 0.6, extreme: 0.8 };
-    const diffAggression = { easy: 0.1, medium: 0.3, hard: 0.5, extreme: 0.8 };
+
+    // --- РИСОВАНИЕ ИГРОКА (С НОГАМИ) ---
+    function drawPlayer(p) {
+        const isMy = p.isPlayer;
+        const x = p.x, y = p.y, r = p.r;
+        
+        // Тень
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 15;
+        
+        // Тело (круг)
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = isMy ? 'gold' : '#222';
+        ctx.lineWidth = isMy ? 3 : 2;
+        ctx.stroke();
+        
+        // Ноги (две линии внизу)
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(x - 6, y + r - 2);
+        ctx.lineTo(x - 10, y + r + 10);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x + 6, y + r - 2);
+        ctx.lineTo(x + 10, y + r + 10);
+        ctx.stroke();
+        
+        // Глаза (белые точки)
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(x - 5, y - 4, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x + 5, y - 4, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#1a1a2e';
+        ctx.beginPath();
+        ctx.arc(x - 4, y - 3, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x + 6, y - 3, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Имя и звёзды
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = 'black';
+        const starStr = isMy ? '⭐'.repeat(save.stars || 1) : '⭐'.repeat(diffStars[selectedDifficulty] || 2);
+        ctx.fillText(p.name + ' ' + starStr, x, y - r - 12);
+        ctx.shadowBlur = 0;
+        
+        // Роль
+        if (p.isGoalkeeper) {
+            ctx.fillStyle = '#ffd700';
+            ctx.font = '12px sans-serif';
+            ctx.fillText('🧤', x + r + 8, y);
+        }
+        
+        // Индикатор владения мячом
+        if (p === ballOwner) {
+            ctx.strokeStyle = 'rgba(255,255,0,0.6)';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([4, 6]);
+            ctx.beginPath();
+            ctx.arc(x, y, r + 8, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    }
 
     // --- ИНИЦИАЛИЗАЦИЯ ИГРОКОВ ---
     function initPlayers() {
@@ -449,7 +523,6 @@
             }
         });
         ballOwner = null;
-        ballOffset = { x: 0, y: 0 };
         resetBall();
     }
 
@@ -459,7 +532,6 @@
         ball.vx = 0;
         ball.vy = 0;
         ballOwner = null;
-        ballOffset = { x: 0, y: 0 };
     }
 
     // --- ОТБОР ---
@@ -483,23 +555,21 @@
             const chance = 0.3 + (save.stars || 1) * 0.05 - diffTackle[selectedDifficulty] * 0.2;
             if (Math.random() < chance) {
                 ballOwner = player;
-                ball.x = player.x + 30;
+                ball.x = player.x + 25;
                 ball.y = player.y;
                 ball.vx = 0;
                 ball.vy = 0;
-                ballOffset = { x: 0, y: 0 };
                 return true;
             }
         }
         return false;
     }
 
-    // --- УМНЫЙ И ЖЁСТКИЙ ИИ ---
+    // --- БОТЫ ---
     function updateBot(p, isTeamA) {
         const dx = ball.x - p.x;
         const dy = ball.y - p.y;
         const distToBall = Math.sqrt(dx*dx + dy*dy);
-        const aggression = diffAggression[selectedDifficulty] || 0.3;
 
         let targetX = p.targetX, targetY = p.targetY;
 
@@ -516,43 +586,34 @@
             }
         } else {
             if (p === ballOwner) {
-                // Ведёт мяч к воротам
                 const targetGoalX = isTeamA ? W-40 : 20;
                 const targetGoalY = H/2 + (Math.random()-0.5)*60;
                 targetX = targetGoalX;
                 targetY = targetGoalY;
-                
-                // Жёсткий удар с высокой вероятностью
-                if (distToBall < 40 && Math.random() < (selectedDifficulty === 'extreme' ? 0.08 : 0.04)) {
+                if (Math.random() < 0.03 && distToBall < 40) {
                     const kx = targetGoalX - ball.x;
                     const ky = targetGoalY - ball.y;
                     const kd = Math.sqrt(kx*kx + ky*ky) || 1;
-                    const power = p.power * (selectedDifficulty === 'extreme' ? 1.6 : 1.2);
-                    ball.vx = (kx / kd) * power * (0.9 + Math.random() * 0.3);
-                    ball.vy = (ky / kd) * power * (0.9 + Math.random() * 0.3);
+                    const power = p.power * (selectedDifficulty === 'extreme' ? 1.4 : 1.0);
+                    ball.vx = (kx / kd) * power;
+                    ball.vy = (ky / kd) * power;
                     ballOwner = null;
                     return;
                 }
             } else {
-                // Прессинг — бежит к мячу агрессивно
-                if (distToBall < 350) {
-                    const offset = 30 + aggression * 50;
-                    targetX = ball.x + (Math.random()-0.5) * offset;
-                    targetY = ball.y + (Math.random()-0.5) * offset;
+                if (distToBall < 300) {
+                    targetX = ball.x + (Math.random()-0.5) * 80;
+                    targetY = ball.y + (Math.random()-0.5) * 80;
                 } else {
                     targetX = ball.x;
                     targetY = ball.y;
                 }
-                
-                // Жёсткий отбор (высокий шанс перехвата)
-                if (ballOwner && distToBall < 55 && Math.random() < diffTackle[selectedDifficulty] * 0.7) {
+                if (ballOwner && distToBall < 50 && Math.random() < diffTackle[selectedDifficulty] * 0.5) {
                     ballOwner = p;
-                    ball.x = p.x + 30;
+                    ball.x = p.x + 25;
                     ball.y = p.y;
                     ball.vx = 0;
                     ball.vy = 0;
-                    ballOffset = { x: 0, y: 0 };
-                    return;
                 }
             }
         }
@@ -583,7 +644,7 @@
         }
     }
 
-    // --- ОБНОВЛЕНИЕ ---
+    // --- ОБНОВЛЕНИЕ (С УЛУЧШЕННОЙ ФИЗИКОЙ УДАРА) ---
     function update() {
         if (gameState !== 'playing' || !matchActive) return;
 
@@ -601,22 +662,14 @@
             }
         }
 
-        // --- ПЛАВНОЕ ВЕДЕНИЕ МЯЧА ---
+        // Ведение мяча
         if (ballOwner) {
-            const targetX = ballOwner.x + 28;
+            const targetX = ballOwner.x + 25;
             const targetY = ballOwner.y;
-            // Мяч следует за игроком с плавностью
-            ball.x += (targetX - ball.x) * 0.2;
-            ball.y += (targetY - ball.y) * 0.2;
+            ball.x += (targetX - ball.x) * 0.25;
+            ball.y += (targetY - ball.y) * 0.25;
             ball.vx = 0;
             ball.vy = 0;
-            
-            // Если мяч слишком далеко от владельца — теряем контроль
-            const dx = ball.x - ballOwner.x;
-            const dy = ball.y - ballOwner.y;
-            if (Math.sqrt(dx*dx + dy*dy) > 60) {
-                ballOwner = null;
-            }
         }
 
         allPlayers.forEach(p => {
@@ -631,10 +684,11 @@
             updateBot(p, p.team === 'A');
         });
 
-        // Удар
+        // --- НОВАЯ МЕХАНИКА УДАРА ---
         if (myPlayer && kickPressed && ballOwner === myPlayer) {
             const angle = Math.atan2(joystickY, joystickX);
-            const power = 5 + (save.stars || 1) * 1.8;
+            // Мощный удар (мяч летит далеко и быстро)
+            const power = 7 + (save.stars || 1) * 2.0;
             ball.vx = Math.cos(angle) * power * (0.9 + Math.random() * 0.2);
             ball.vy = Math.sin(angle) * power * (0.9 + Math.random() * 0.2);
             ballOwner = null;
@@ -643,17 +697,15 @@
 
         // Отбор
         if (myPlayer && tacklePressed) {
-            if (performTackle(myPlayer)) {
-                tacklePressed = false;
-            } else {
-                tacklePressed = false;
-            }
+            performTackle(myPlayer);
+            tacklePressed = false;
         }
 
-        // Физика мяча (если ничей)
+        // Физика мяча (с трением и отскоками)
         if (!ballOwner) {
             ball.x += ball.vx;
             ball.y += ball.vy;
+            // Трение
             ball.vx *= 0.99;
             ball.vy *= 0.99;
             if (Math.abs(ball.vx) < 0.1) ball.vx = 0;
@@ -674,8 +726,7 @@
                 const force = (p.isPlayer ? 4.0 * speedBonus : 3.5) + Math.random()*2;
                 ball.vx += Math.cos(angle) * force;
                 ball.vy += Math.sin(angle) * force;
-                // Перехват мяча с шансом
-                if (!ballOwner && Math.random() < 0.3) {
+                if (!ballOwner && Math.random() < 0.25) {
                     ballOwner = p;
                     ball.vx *= 0.3;
                     ball.vy *= 0.3;
@@ -772,6 +823,7 @@
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
+        // Разметка
         ctx.strokeStyle = 'rgba(255,255,255,0.3)';
         ctx.lineWidth = 3;
         const r = 35;
@@ -800,7 +852,7 @@
         ctx.arc(W/2, H/2, 60, 0, Math.PI*2);
         ctx.stroke();
 
-        // Ворота A
+        // Ворота
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 4;
         ctx.strokeRect(goalA.x, goalA.y, goalA.w, goalA.h);
@@ -825,7 +877,6 @@
             ctx.stroke();
         }
 
-        // Ворота B
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 4;
         ctx.strokeRect(goalB.x, goalB.y, goalB.w, goalB.h);
@@ -852,36 +903,10 @@
 
         // Игроки
         for (let p of allPlayers) {
-            const isMy = p.isPlayer;
-            ctx.shadowColor = isMy ? 'rgba(255,215,0,0.8)' : 'rgba(0,0,0,0.3)';
-            ctx.shadowBlur = isMy ? 30 : 8;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-            ctx.fillStyle = p.color;
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.strokeStyle = isMy ? 'gold' : '#222';
-            ctx.lineWidth = isMy ? 4 : 2;
-            ctx.stroke();
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 11px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.shadowBlur = 6;
-            ctx.shadowColor = 'black';
-            const starStr = isMy ? '⭐'.repeat(save.stars || 1) : '⭐'.repeat(diffStars[selectedDifficulty] || 2);
-            const role = p.isGoalkeeper ? '🧤' : '⚡';
-            ctx.fillText(p.name + ' ' + starStr + ' ' + role, p.x, p.y - p.r - 8);
-            ctx.shadowBlur = 0;
-            if (p === ballOwner) {
-                ctx.strokeStyle = 'rgba(255,255,0,0.5)';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r + 6, 0, Math.PI*2);
-                ctx.stroke();
-            }
+            drawPlayer(p);
         }
 
-        // Мяч
+        // Мяч (с бликом)
         ctx.shadowColor = 'rgba(0,0,0,0.6)';
         ctx.shadowBlur = 20;
         ctx.beginPath();
@@ -892,13 +917,14 @@
         ctx.strokeStyle = '#111';
         ctx.lineWidth = 1.5;
         ctx.stroke();
+        // Блик
         ctx.beginPath();
-        ctx.arc(ball.x-3, ball.y-3, 4, 0, Math.PI*2);
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.arc(ball.x-3, ball.y-3, 3, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
         ctx.fill();
     }
 
-    // --- ТАЙМЕР И МАТЧ ---
+    // --- ТАЙМЕР ---
     function startMatch() {
         if (matchActive) return;
         matchActive = true;
@@ -966,7 +992,7 @@
         requestAnimationFrame(loop);
     }
 
-    // --- СОБЫТИЯ МЕНЮ ---
+    // --- СОБЫТИЯ ---
     document.querySelectorAll('.player-card').forEach(el => {
         el.addEventListener('click', function() {
             document.querySelectorAll('.player-card').forEach(c => c.classList.remove('selected'));
