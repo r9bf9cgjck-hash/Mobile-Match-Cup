@@ -53,7 +53,27 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        #menu .sub { font-size: 1rem; color: #aaa; margin-bottom: 12px; }
+        .mode-select {
+            display: flex;
+            gap: 16px;
+            margin: 12px 0;
+        }
+        .mode-btn {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 10px 24px;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .mode-btn.active {
+            border-color: #ffd700;
+            background: rgba(255,215,0,0.2);
+        }
+        .mode-btn:active { transform: scale(0.94); }
         .players {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -75,7 +95,8 @@
             transition: 0.2s;
         }
         .player-card:active { transform: scale(0.94); background: rgba(255,215,0,0.2); border-color: gold; }
-        .player-card .emoji { font-size: 1.8rem; display: block; }
+        .player-card .number { font-size: 1.6rem; display: block; color: #ffd700; }
+        .player-card .name { font-size: 0.8rem; }
         .player-card.selected { border-color: #ffd700; background: rgba(255,215,0,0.15); }
         .difficulty {
             display: flex;
@@ -300,12 +321,14 @@
     <div id="menu">
         <button id="resetBtn">🗑️ Сброс</button>
         <h1>⚽ MATCH CUP</h1>
-        <div class="sub">Шаг 1: Выбери игрока</div>
-        <div class="players">
-            <div class="player-card" data-player="0"><span class="emoji">⚔️</span>Хабиб</div>
-            <div class="player-card" data-player="1"><span class="emoji">⚔️</span>Салаудин</div>
-            <div class="player-card" data-player="2"><span class="emoji">🛡️</span>Шамиль Рб</div>
-            <div class="player-card" data-player="3"><span class="emoji">🛡️</span>Шамиль Jr</div>
+        <div style="font-size:0.9rem; color:#aaa; margin:4px 0;">Выбери режим:</div>
+        <div class="mode-select">
+            <button class="mode-btn active" data-mode="2v2">2×2</button>
+            <button class="mode-btn" data-mode="3v3">3×3</button>
+        </div>
+        <div class="sub" style="margin-top:4px;">Шаг 1: Выбери игрока</div>
+        <div class="players" id="player-list">
+            <!-- будут заполнены JS -->
         </div>
         <div style="font-size:0.8rem; color:#aaa; margin:4px 0;">Шаг 2: Выбери сложность</div>
         <div class="difficulty">
@@ -334,7 +357,7 @@
 
 <script>
     // ============================================================
-    //  MATCH CUP — УВЕЛИЧЕННЫЕ ВОРОТА, ЗАПРЕТ ЗАБЕГАНИЯ, СКОРОСТЬ ОТ ЗВЁЗД
+    //  MATCH CUP — РЕЖИМЫ 2×2 И 3×3
     // ============================================================
 
     const canvas = document.getElementById('gameCanvas');
@@ -361,6 +384,7 @@
     // --- СОСТОЯНИЕ ---
     let selectedPlayer = -1;
     let selectedDifficulty = 'easy';
+    let selectedMode = '2v2';
     let gameState = 'menu';
     let matchActive = false;
     let timerInterval = null;
@@ -383,8 +407,8 @@
     let ball = { x: W/2, y: H/2, r: 10, vx: 0, vy: 0 };
     let ballOwner = null;
 
-    // --- ВОРОТА (ЧУТЬ БОЛЬШЕ) ---
-    const GOAL_H = 75; // было 60, стало 75
+    // --- ВОРОТА ---
+    const GOAL_H = 75;
     const goalA = { x: 25, y: H/2 - GOAL_H/2, w: 18, h: GOAL_H };
     const goalB = { x: W-43, y: H/2 - GOAL_H/2, w: 18, h: GOAL_H };
 
@@ -404,78 +428,58 @@
     const diffPower = { easy: 2.5, medium: 3.5, hard: 4.5, extreme: 5.5 };
     const diffTackle = { easy: 0.2, medium: 0.4, hard: 0.6, extreme: 0.8 };
 
-    // --- РИСОВАНИЕ ИГРОКА ---
-    function drawPlayer(p) {
-        const isMy = p.isPlayer;
-        const x = p.x, y = p.y, r = p.r;
-        
-        ctx.shadowColor = 'rgba(0,0,0,0.3)';
-        ctx.shadowBlur = 15;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = isMy ? 'gold' : '#222';
-        ctx.lineWidth = isMy ? 3 : 2;
-        ctx.stroke();
-        
-        // Ноги
-        ctx.strokeStyle = p.color;
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(x - 6, y + r - 2);
-        ctx.lineTo(x - 10, y + r + 10);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x + 6, y + r - 2);
-        ctx.lineTo(x + 10, y + r + 10);
-        ctx.stroke();
-        
-        // Глаза
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        ctx.arc(x - 5, y - 4, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(x + 5, y - 4, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#1a1a2e';
-        ctx.beginPath();
-        ctx.arc(x - 4, y - 3, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(x + 6, y - 3, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Имя и звёзды (РЕЙТИНГ)
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 10px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.shadowBlur = 6;
-        ctx.shadowColor = 'black';
-        const starStr = isMy ? '⭐'.repeat(save.stars || 1) : '⭐'.repeat(diffStars[selectedDifficulty] || 2);
-        ctx.fillText(p.name + ' ' + starStr, x, y - r - 12);
-        ctx.shadowBlur = 0;
-        
-        if (p.isGoalkeeper) {
-            ctx.fillStyle = '#ffd700';
-            ctx.font = '12px sans-serif';
-            ctx.fillText('🧤', x + r + 8, y);
+    // --- ДАННЫЕ ИГРОКОВ (номера + имена) ---
+    const PLAYER_DATA = {
+        '2v2': {
+            teamA: [
+                { id: 0, name: 'Хабиб', number: '7', color: '#d32f2f' },
+                { id: 1, name: 'Азиз', number: '10', color: '#e57373' }
+            ],
+            teamB: [
+                { id: 2, name: 'Шамиль Рб', number: '4', color: '#1976d2' },
+                { id: 3, name: 'Шамиль Jr', number: '8', color: '#64b5f6' }
+            ]
+        },
+        '3v3': {
+            teamA: [
+                { id: 0, name: 'Хабиб', number: '7', color: '#d32f2f' },
+                { id: 1, name: 'Азиз', number: '10', color: '#e57373' },
+                { id: 4, name: 'Абдул', number: '5', color: '#f06292' }
+            ],
+            teamB: [
+                { id: 2, name: 'Шамиль Рб', number: '4', color: '#1976d2' },
+                { id: 3, name: 'Шамиль Jr', number: '8', color: '#64b5f6' },
+                { id: 5, name: 'Салаудин', number: '11', color: '#42a5f5' }
+            ]
         }
-        
-        if (p === ballOwner) {
-            ctx.strokeStyle = 'rgba(255,255,0,0.6)';
-            ctx.lineWidth = 3;
-            ctx.setLineDash([4, 6]);
-            ctx.beginPath();
-            ctx.arc(x, y, r + 8, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
+    };
+
+    // --- ПОСТРОЕНИЕ МЕНЮ ---
+    function buildPlayerMenu() {
+        const list = document.getElementById('player-list');
+        list.innerHTML = '';
+        const data = PLAYER_DATA[selectedMode];
+        const all = [...data.teamA, ...data.teamB];
+        all.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'player-card';
+            card.dataset.player = p.id;
+            card.innerHTML = `
+                <span class="number">#${p.number}</span>
+                <span class="name">${p.name}</span>
+            `;
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.player-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedPlayer = parseInt(this.dataset.player);
+                startBtn.disabled = false;
+                document.querySelectorAll('.diff-btn').forEach(b => b.disabled = false);
+            });
+            list.appendChild(card);
+        });
     }
 
-    // --- ИНИЦИАЛИЗАЦИЯ ---
+    // --- ИНИЦИАЛИЗАЦИЯ ИГРОКОВ ---
     function initPlayers() {
         const playerStars = save.stars || 1;
         const botStars = diffStars[selectedDifficulty] || 2;
@@ -484,38 +488,68 @@
         const botBonus = 1 + (botStars - 1) * 0.12;
         const playerBonus = 1 + (playerStars - 1) * 0.15;
 
-        let a1role = 'field', a2role = 'goalkeeper';
-        let b1role = 'field', b2role = 'goalkeeper';
-        if (selectedPlayer === 1) { a1role = 'goalkeeper'; a2role = 'field'; }
-        if (selectedPlayer === 3) { b1role = 'goalkeeper'; b2role = 'field'; }
+        const data = PLAYER_DATA[selectedMode];
+        // Определяем роли
+        const teamA_data = data.teamA.map(p => ({
+            ...p,
+            isPlayer: p.id === selectedPlayer,
+            team: 'A',
+            isGoalkeeper: false,
+            speed: 1.6 * (p.id === selectedPlayer ? playerBonus : botBonus),
+            power: 3.5 * (p.id === selectedPlayer ? playerBonus : botBonus)
+        }));
+        const teamB_data = data.teamB.map(p => ({
+            ...p,
+            isPlayer: p.id === selectedPlayer,
+            team: 'B',
+            isGoalkeeper: false,
+            speed: 1.6 * (p.id === selectedPlayer ? playerBonus : botBonus),
+            power: 3.5 * (p.id === selectedPlayer ? playerBonus : botBonus)
+        }));
 
-        const teamA = [
-            { id: 0, name: 'Хабиб', color: '#d32f2f', x: 200, y: 400, r: 22, isPlayer: (selectedPlayer === 0), team: 'A', isGoalkeeper: (a1role === 'goalkeeper'), speed: 1.6 * (selectedPlayer === 0 ? playerBonus : botBonus), power: 3.5 * (selectedPlayer === 0 ? playerBonus : botBonus) },
-            { id: 1, name: 'Салаудин', color: '#e57373', x: 60, y: 400, r: 22, isPlayer: (selectedPlayer === 1), team: 'A', isGoalkeeper: (a2role === 'goalkeeper'), speed: 1.6 * (selectedPlayer === 1 ? playerBonus : botBonus), power: 3.5 * (selectedPlayer === 1 ? playerBonus : botBonus) }
-        ];
-        const teamB = [
-            { id: 2, name: 'Шамиль Рб', color: '#1976d2', x: 400, y: 400, r: 22, isPlayer: (selectedPlayer === 2), team: 'B', isGoalkeeper: (b1role === 'goalkeeper'), speed: 1.6 * (selectedPlayer === 2 ? playerBonus : botBonus), power: 3.5 * (selectedPlayer === 2 ? playerBonus : botBonus) },
-            { id: 3, name: 'Шамиль Jr', color: '#64b5f6', x: W-60, y: 400, r: 22, isPlayer: (selectedPlayer === 3), team: 'B', isGoalkeeper: (b2role === 'goalkeeper'), speed: 1.6 * (selectedPlayer === 3 ? playerBonus : botBonus), power: 3.5 * (selectedPlayer === 3 ? playerBonus : botBonus) }
-        ];
+        // Расставляем позиции
+        const totalA = teamA_data.length;
+        const totalB = teamB_data.length;
+        const spacingA = 300 / (totalA + 1);
+        const spacingB = 300 / (totalB + 1);
+        teamA_data.forEach((p, i) => {
+            p.x = 180;
+            p.y = 200 + spacingA * (i + 1);
+            p.targetX = p.x + (Math.random()-0.5)*100;
+            p.targetY = p.y + (Math.random()-0.5)*100;
+        });
+        teamB_data.forEach((p, i) => {
+            p.x = 420;
+            p.y = 200 + spacingB * (i + 1);
+            p.targetX = p.x + (Math.random()-0.5)*100;
+            p.targetY = p.y + (Math.random()-0.5)*100;
+        });
 
-        allPlayers = [...teamA, ...teamB];
+        // Вратарь (первый в команде становится вратарём)
+        if (teamA_data.length > 0) {
+            const gkA = teamA_data[0];
+            gkA.isGoalkeeper = true;
+            gkA.x = 55;
+            gkA.y = H/2;
+        }
+        if (teamB_data.length > 0) {
+            const gkB = teamB_data[0];
+            gkB.isGoalkeeper = true;
+            gkB.x = W-55;
+            gkB.y = H/2;
+        }
+
+        // Если игрок вратарь, делаем его полевым
+        const myPlayer = [...teamA_data, ...teamB_data].find(p => p.isPlayer);
+        if (myPlayer && myPlayer.isGoalkeeper) {
+            myPlayer.isGoalkeeper = false;
+            myPlayer.x = 180 + (myPlayer.team === 'A' ? 0 : 240);
+            myPlayer.y = 400;
+        }
+
+        allPlayers = [...teamA_data, ...teamB_data];
         allPlayers.forEach(p => {
-            if (p.isGoalkeeper && !p.isPlayer) {
-                p.x = (p.team === 'A') ? 55 : W-55;
-                p.y = H/2;
-            }
-            if (p.isPlayer) {
-                p.color = '#ffd700';
-                if (p.isGoalkeeper) {
-                    p.isGoalkeeper = false;
-                    p.x = 200 + (p.team === 'A' ? 0 : 200);
-                    p.y = 400;
-                }
-            }
-            if (!p.isPlayer) {
-                p.targetX = p.x + (Math.random()-0.5)*100;
-                p.targetY = p.y + (Math.random()-0.5)*100;
-            }
+            if (p.isPlayer) p.color = '#ffd700';
         });
         ballOwner = null;
         resetBall();
@@ -639,15 +673,172 @@
         }
     }
 
+    // --- РИСОВАНИЕ ---
+    function drawPlayer(p) {
+        const isMy = p.isPlayer;
+        const x = p.x, y = p.y, r = p.r || 22;
+        
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = isMy ? 'gold' : '#222';
+        ctx.lineWidth = isMy ? 3 : 2;
+        ctx.stroke();
+        
+        // Номер
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = 'black';
+        ctx.fillText(p.number, x, y + 5);
+        ctx.shadowBlur = 0;
+        
+        // Имя и звёзды
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.font = '8px sans-serif';
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = 'black';
+        ctx.fillText(p.name, x, y - r - 4);
+        const starStr = isMy ? '⭐'.repeat(save.stars || 1) : '⭐'.repeat(diffStars[selectedDifficulty] || 2);
+        ctx.fillStyle = '#ffd700';
+        ctx.font = '8px sans-serif';
+        ctx.fillText(starStr, x, y - r - 14);
+        ctx.shadowBlur = 0;
+        
+        if (p.isGoalkeeper) {
+            ctx.fillStyle = '#ffd700';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('🧤', x + r + 10, y);
+        }
+        
+        if (p === ballOwner) {
+            ctx.strokeStyle = 'rgba(255,255,0,0.5)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([3, 5]);
+            ctx.beginPath();
+            ctx.arc(x, y, r + 6, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+        const grad = ctx.createRadialGradient(W/2, H/2, 50, W/2, H/2, 400);
+        grad.addColorStop(0, '#4caf50');
+        grad.addColorStop(1, '#2e7d32');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 3;
+        const r = 35;
+        ctx.beginPath();
+        ctx.moveTo(r, 5);
+        ctx.lineTo(W-r, 5);
+        ctx.quadraticCurveTo(W-5, 5, W-5, r);
+        ctx.lineTo(W-5, H-r);
+        ctx.quadraticCurveTo(W-5, H-5, W-r, H-5);
+        ctx.lineTo(r, H-5);
+        ctx.quadraticCurveTo(5, H-5, 5, H-r);
+        ctx.lineTo(5, r);
+        ctx.quadraticCurveTo(5, 5, r, 5);
+        ctx.closePath();
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8,12]);
+        ctx.beginPath();
+        ctx.moveTo(W/2, 5);
+        ctx.lineTo(W/2, H-5);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(W/2, H/2, 60, 0, Math.PI*2);
+        ctx.stroke();
+
+        // Ворота
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(goalA.x, goalA.y, goalA.w, goalA.h);
+        ctx.beginPath();
+        ctx.moveTo(goalA.x, goalA.y);
+        ctx.lineTo(goalA.x + goalA.w, goalA.y);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(goalA.x, goalA.y, goalA.w, goalA.h);
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < goalA.w; i += 10) {
+            ctx.beginPath();
+            ctx.moveTo(goalA.x + i, goalA.y);
+            ctx.lineTo(goalA.x + i, goalA.y + goalA.h);
+            ctx.stroke();
+        }
+        for (let i = 0; i < goalA.h; i += 10) {
+            ctx.beginPath();
+            ctx.moveTo(goalA.x, goalA.y + i);
+            ctx.lineTo(goalA.x + goalA.w, goalA.y + i);
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(goalB.x, goalB.y, goalB.w, goalB.h);
+        ctx.beginPath();
+        ctx.moveTo(goalB.x, goalB.y);
+        ctx.lineTo(goalB.x + goalB.w, goalB.y);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(goalB.x, goalB.y, goalB.w, goalB.h);
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < goalB.w; i += 10) {
+            ctx.beginPath();
+            ctx.moveTo(goalB.x + i, goalB.y);
+            ctx.lineTo(goalB.x + i, goalB.y + goalB.h);
+            ctx.stroke();
+        }
+        for (let i = 0; i < goalB.h; i += 10) {
+            ctx.beginPath();
+            ctx.moveTo(goalB.x, goalB.y + i);
+            ctx.lineTo(goalB.x + goalB.w, goalB.y + i);
+            ctx.stroke();
+        }
+
+        for (let p of allPlayers) {
+            drawPlayer(p);
+        }
+
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(ball.x-3, ball.y-3, 3, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fill();
+    }
+
     // --- ОБНОВЛЕНИЕ ---
     function update() {
         if (gameState !== 'playing' || !matchActive) return;
 
         const myPlayer = allPlayers.find(p => p.isPlayer === true);
-        // СКОРОСТЬ ЗАВИСИТ ОТ ЗВЁЗД
         const speedBonus = 1 + (save.stars - 1) * 0.15;
 
-        // Джойстик
         if (myPlayer && joystickActive) {
             const jx = joystickX, jy = joystickY;
             const dist = Math.sqrt(jx*jx + jy*jy);
@@ -658,24 +849,22 @@
             }
         }
 
-        // ЗАПРЕТ ЗАБЕГАНИЯ В ВОРОТА (для всех полевых)
         allPlayers.forEach(p => {
             if (!p.isGoalkeeper) {
-                // Левая штрафная
-                if (p.x < goalA.x + goalA.w + 5 && p.y > goalA.y && p.y < goalA.y + goalA.h) {
-                    p.x = goalA.x + goalA.w + 5;
-                }
-                // Правая штрафная
-                if (p.x > goalB.x - goalB.w - 5 && p.y > goalB.y && p.y < goalB.y + goalB.h) {
-                    p.x = goalB.x - goalB.w - 5;
-                }
-                // Общие границы
                 p.x = Math.max(35, Math.min(W-35, p.x));
                 p.y = Math.max(35, Math.min(H-35, p.y));
             }
+            // Запрет забегания в ворота
+            if (!p.isGoalkeeper) {
+                if (p.x < goalA.x + goalA.w + 5 && p.y > goalA.y && p.y < goalA.y + goalA.h) {
+                    p.x = goalA.x + goalA.w + 5;
+                }
+                if (p.x > goalB.x - goalB.w - 5 && p.y > goalB.y && p.y < goalB.y + goalB.h) {
+                    p.x = goalB.x - goalB.w - 5;
+                }
+            }
         });
 
-        // Ведение мяча
         if (ballOwner) {
             const targetX = ballOwner.x + 25;
             const targetY = ballOwner.y;
@@ -685,12 +874,10 @@
             ball.vy = 0;
         }
 
-        // Боты
         allPlayers.filter(p => !p.isPlayer).forEach(p => {
             updateBot(p, p.team === 'A');
         });
 
-        // Удар
         if (myPlayer && kickPressed && ballOwner === myPlayer) {
             const angle = Math.atan2(joystickY, joystickX);
             const power = 7 + (save.stars || 1) * 2.0;
@@ -700,13 +887,11 @@
             kickPressed = false;
         }
 
-        // Отбор
         if (myPlayer && tacklePressed) {
             performTackle(myPlayer);
             tacklePressed = false;
         }
 
-        // Физика мяча
         if (!ballOwner) {
             ball.x += ball.vx;
             ball.y += ball.vy;
@@ -716,15 +901,14 @@
             if (Math.abs(ball.vy) < 0.1) ball.vy = 0;
         }
 
-        // Столкновения с игроками
         for (let p of allPlayers) {
             if (p === ballOwner) continue;
             const dx = ball.x - p.x;
             const dy = ball.y - p.y;
             const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist < ball.r + p.r) {
+            if (dist < ball.r + (p.r || 22)) {
                 const angle = Math.atan2(dy, dx);
-                const overlap = (ball.r + p.r - dist) * 0.5;
+                const overlap = (ball.r + (p.r || 22) - dist) * 0.5;
                 ball.x += Math.cos(angle) * overlap;
                 ball.y += Math.sin(angle) * overlap;
                 const force = (p.isPlayer ? 4.0 * speedBonus : 3.5) + Math.random()*2;
@@ -786,7 +970,6 @@
             }
         }
 
-        // Стенки
         if (ball.y < ball.r + 5) { ball.y = ball.r + 5; ball.vy *= -0.6; }
         if (ball.y > H - ball.r - 5) { ball.y = H - ball.r - 5; ball.vy *= -0.6; }
         if (ball.x < ball.r + 5 && !(ball.y > goalA.y && ball.y < goalA.y + goalA.h)) {
@@ -796,7 +979,6 @@
             ball.x = W - ball.r - 5; ball.vx *= -0.6;
         }
 
-        // Голы
         if (ball.x < goalA.x + goalA.w && ball.y > goalA.y + 5 && ball.y < goalA.y + goalA.h - 5) {
             if (!ballOwner || ballOwner.team !== 'A') {
                 scoreB++;
@@ -816,114 +998,6 @@
 
         ball.x = Math.max(ball.r, Math.min(W - ball.r, ball.x));
         ball.y = Math.max(ball.r, Math.min(H - ball.r, ball.y));
-    }
-
-    // --- ОТРИСОВКА ---
-    function draw() {
-        ctx.clearRect(0, 0, W, H);
-        const grad = ctx.createRadialGradient(W/2, H/2, 50, W/2, H/2, 400);
-        grad.addColorStop(0, '#4caf50');
-        grad.addColorStop(1, '#2e7d32');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-
-        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-        ctx.lineWidth = 3;
-        const r = 35;
-        ctx.beginPath();
-        ctx.moveTo(r, 5);
-        ctx.lineTo(W-r, 5);
-        ctx.quadraticCurveTo(W-5, 5, W-5, r);
-        ctx.lineTo(W-5, H-r);
-        ctx.quadraticCurveTo(W-5, H-5, W-r, H-5);
-        ctx.lineTo(r, H-5);
-        ctx.quadraticCurveTo(5, H-5, 5, H-r);
-        ctx.lineTo(5, r);
-        ctx.quadraticCurveTo(5, 5, r, 5);
-        ctx.closePath();
-        ctx.stroke();
-
-        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([8,12]);
-        ctx.beginPath();
-        ctx.moveTo(W/2, 5);
-        ctx.lineTo(W/2, H-5);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.beginPath();
-        ctx.arc(W/2, H/2, 60, 0, Math.PI*2);
-        ctx.stroke();
-
-        // Ворота (чуть больше)
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(goalA.x, goalA.y, goalA.w, goalA.h);
-        ctx.beginPath();
-        ctx.moveTo(goalA.x, goalA.y);
-        ctx.lineTo(goalA.x + goalA.w, goalA.y);
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(255,255,255,0.15)';
-        ctx.fillRect(goalA.x, goalA.y, goalA.w, goalA.h);
-        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < goalA.w; i += 10) {
-            ctx.beginPath();
-            ctx.moveTo(goalA.x + i, goalA.y);
-            ctx.lineTo(goalA.x + i, goalA.y + goalA.h);
-            ctx.stroke();
-        }
-        for (let i = 0; i < goalA.h; i += 10) {
-            ctx.beginPath();
-            ctx.moveTo(goalA.x, goalA.y + i);
-            ctx.lineTo(goalA.x + goalA.w, goalA.y + i);
-            ctx.stroke();
-        }
-
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(goalB.x, goalB.y, goalB.w, goalB.h);
-        ctx.beginPath();
-        ctx.moveTo(goalB.x, goalB.y);
-        ctx.lineTo(goalB.x + goalB.w, goalB.y);
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(255,255,255,0.15)';
-        ctx.fillRect(goalB.x, goalB.y, goalB.w, goalB.h);
-        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < goalB.w; i += 10) {
-            ctx.beginPath();
-            ctx.moveTo(goalB.x + i, goalB.y);
-            ctx.lineTo(goalB.x + i, goalB.y + goalB.h);
-            ctx.stroke();
-        }
-        for (let i = 0; i < goalB.h; i += 10) {
-            ctx.beginPath();
-            ctx.moveTo(goalB.x, goalB.y + i);
-            ctx.lineTo(goalB.x + goalB.w, goalB.y + i);
-            ctx.stroke();
-        }
-
-        // Игроки
-        for (let p of allPlayers) {
-            drawPlayer(p);
-        }
-
-        // Мяч
-        ctx.shadowColor = 'rgba(0,0,0,0.6)';
-        ctx.shadowBlur = 20;
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
-        ctx.fillStyle = '#fff';
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = '#111';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(ball.x-3, ball.y-3, 3, 0, Math.PI*2);
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.fill();
     }
 
     // --- ТАЙМЕР ---
@@ -994,14 +1068,17 @@
         requestAnimationFrame(loop);
     }
 
-    // --- СОБЫТИЯ ---
-    document.querySelectorAll('.player-card').forEach(el => {
+    // --- СОБЫТИЯ МЕНЮ ---
+    document.querySelectorAll('.mode-btn').forEach(el => {
         el.addEventListener('click', function() {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedMode = this.dataset.mode;
+            selectedPlayer = -1;
+            startBtn.disabled = true;
+            document.querySelectorAll('.diff-btn').forEach(b => b.disabled = true);
             document.querySelectorAll('.player-card').forEach(c => c.classList.remove('selected'));
-            this.classList.add('selected');
-            selectedPlayer = parseInt(this.dataset.player);
-            startBtn.disabled = false;
-            document.querySelectorAll('.diff-btn').forEach(b => b.disabled = false);
+            buildPlayerMenu();
         });
     });
 
@@ -1050,6 +1127,7 @@
         gameState = 'menu';
         matchActive = false;
         if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+        buildPlayerMenu();
     });
 
     // --- ДЖОЙСТИК ---
@@ -1143,6 +1221,7 @@
     });
 
     // --- СТАРТ ---
+    buildPlayerMenu();
     loop();
 </script>
 </body>
