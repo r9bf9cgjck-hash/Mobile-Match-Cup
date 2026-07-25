@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Match Cup - New Era</title>
+    <title>Match Cup</title>
     <style>
         * { margin: 0; padding: 0; touch-action: none; user-select: none; }
         body {
@@ -53,26 +53,41 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        .tab-select {
+            display: flex;
+            gap: 12px;
+            margin: 10px 0;
+        }
+        .tab-btn {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 8px 20px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .tab-btn.active { border-color: #ffd700; background: rgba(255,215,0,0.2); }
+        .tab-btn:active { transform: scale(0.94); }
         .mode-select {
             display: flex;
             gap: 16px;
-            margin: 12px 0;
+            margin: 8px 0;
         }
         .mode-btn {
             background: rgba(255,255,255,0.1);
             border: 2px solid rgba(255,255,255,0.2);
             border-radius: 16px;
-            padding: 10px 24px;
+            padding: 8px 20px;
             color: #fff;
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
             transition: 0.2s;
         }
-        .mode-btn.active {
-            border-color: #ffd700;
-            background: rgba(255,215,0,0.2);
-        }
+        .mode-btn.active { border-color: #ffd700; background: rgba(255,215,0,0.2); }
         .mode-btn:active { transform: scale(0.94); }
         .players {
             display: grid;
@@ -96,6 +111,7 @@
         }
         .player-card:active { transform: scale(0.94); background: rgba(255,215,0,0.2); border-color: gold; }
         .player-card .number { font-size: 1.6rem; display: block; color: #ffd700; }
+        .player-card .rating { font-size: 0.9rem; display: block; color: #aaa; }
         .player-card .name { font-size: 0.8rem; }
         .player-card.selected { border-color: #ffd700; background: rgba(255,215,0,0.15); }
         .difficulty {
@@ -321,21 +337,27 @@
     <div id="menu">
         <button id="resetBtn">🗑️ Сброс</button>
         <h1>⚽ MATCH CUP</h1>
-        <div style="font-size:0.9rem; color:#aaa; margin:4px 0;">Выбери режим:</div>
-        <div class="mode-select">
-            <button class="mode-btn active" data-mode="2v2">2×2</button>
-            <button class="mode-btn" data-mode="3v3">3×3</button>
+        <div class="tab-select">
+            <button class="tab-btn active" data-tab="quick">⚡ Быстрый матч</button>
+            <button class="tab-btn" data-tab="career">🏆 Карьера</button>
         </div>
-        <div class="sub" style="margin-top:4px;">Шаг 1: Выбери игрока</div>
-        <div class="players" id="player-list"></div>
-        <div style="font-size:0.8rem; color:#aaa; margin:4px 0;">Шаг 2: Выбери сложность</div>
-        <div class="difficulty">
-            <button class="diff-btn" data-diff="easy" disabled>🟢 Лёгкий</button>
-            <button class="diff-btn" data-diff="medium" disabled>🟡 Средний</button>
-            <button class="diff-btn" data-diff="hard" disabled>🔴 Сложный</button>
-            <button class="diff-btn" data-diff="extreme" disabled>🔥 Хардкор</button>
+        <div id="tabContent">
+            <div class="sub" style="margin-top:4px;">Выбери режим:</div>
+            <div class="mode-select">
+                <button class="mode-btn active" data-mode="2v2">2×2</button>
+                <button class="mode-btn" data-mode="3v3">3×3</button>
+            </div>
+            <div class="sub" style="margin-top:4px;">Выбери игрока:</div>
+            <div class="players" id="player-list"></div>
+            <div style="font-size:0.8rem; color:#aaa; margin:4px 0;">Выбери сложность:</div>
+            <div class="difficulty">
+                <button class="diff-btn" data-diff="easy" disabled>🟢 Лёгкий</button>
+                <button class="diff-btn" data-diff="medium" disabled>🟡 Средний</button>
+                <button class="diff-btn" data-diff="hard" disabled>🔴 Сложный</button>
+                <button class="diff-btn" data-diff="extreme" disabled>🔥 Хардкор</button>
+            </div>
+            <button id="startBtn" disabled>▶️ НАЧАТЬ МАТЧ</button>
         </div>
-        <button id="startBtn" disabled>▶️ НАЧАТЬ МАТЧ</button>
     </div>
 
     <div id="scoreboard">
@@ -355,7 +377,7 @@
 
 <script>
     // ============================================================
-    //  MATCH CUP — РЕЖИМЫ 2×2 И 3×3 С ПОЗИЦИЯМИ
+    //  MATCH CUP — 99-БАЛЬНЫЙ РЕЙТИНГ + КАРЬЕРА
     // ============================================================
 
     const canvas = document.getElementById('gameCanvas');
@@ -383,6 +405,7 @@
     let selectedPlayer = -1;
     let selectedDifficulty = 'easy';
     let selectedMode = '2v2';
+    let selectedTab = 'quick';
     let gameState = 'menu';
     let matchActive = false;
     let timerInterval = null;
@@ -410,64 +433,71 @@
     const goalA = { x: 25, y: H/2 - GOAL_H/2, w: 18, h: GOAL_H };
     const goalB = { x: W-43, y: H/2 - GOAL_H/2, w: 18, h: GOAL_H };
 
-    // --- СОХРАНЕНИЕ ---
-    function loadSave() {
+    // --- ДАННЫЕ ИГРОКОВ (НОВЫЕ РЕЙТИНГИ) ---
+    const PLAYER_DB = {
+        0: { id: 0, name: 'Хабиб', number: '7', color: '#d32f2f', rating: 72, role: 'attacker' },
+        1: { id: 1, name: 'Азиз', number: '10', color: '#e57373', rating: 72, role: 'defender' },
+        2: { id: 2, name: 'Шамиль Рб', number: '4', color: '#1976d2', rating: 69, role: 'attacker' },
+        3: { id: 3, name: 'Шамиль Jr', number: '8', color: '#64b5f6', rating: 67, role: 'defender' },
+        4: { id: 4, name: 'Салаудин', number: '11', color: '#42a5f5', rating: 67, role: 'attacker' },
+        5: { id: 5, name: 'Абдул', number: '5', color: '#f06292', rating: 65, role: 'defender' }
+    };
+
+    // --- КАРЬЕРНЫЕ ДАННЫЕ ---
+    function loadCareer() {
         try {
-            const data = localStorage.getItem('matchcup_save');
+            const data = localStorage.getItem('matchcup_career');
             if (data) return JSON.parse(data);
         } catch(e) {}
-        return { wins: 0, goals: 0, stars: 1 };
+        return {
+            playerId: null,
+            rating: 50,
+            wins: 0,
+            goals: 0,
+            achievements: []
+        };
     }
-    let save = loadSave();
+    let career = loadCareer();
 
-    // --- СЛОЖНОСТЬ (СКОРОСТЬ ЗАВИСИТ ОТ ЗВЁЗД) ---
-    const diffStars = { easy: 2, medium: 3, hard: 4, extreme: 5 };
-    const diffTackle = { easy: 0.2, medium: 0.4, hard: 0.6, extreme: 0.8 };
-    
-    // СКОРОСТЬ: 1⭐ = 1.0, 5⭐ = 2.8 (огромная разница)
-    function getSpeedFromStars(stars) {
-        return 1.0 + (stars - 1) * 0.45;
+    function saveCareer() {
+        localStorage.setItem('matchcup_career', JSON.stringify(career));
     }
 
-    // --- ДАННЫЕ ИГРОКОВ ---
-    const PLAYER_DATA = {
-        '2v2': {
-            teamA: [
-                { id: 0, name: 'Хабиб', number: '7', color: '#d32f2f', role: 'attacker' },
-                { id: 1, name: 'Азиз', number: '10', color: '#e57373', role: 'defender' }
-            ],
-            teamB: [
-                { id: 2, name: 'Шамиль Рб', number: '4', color: '#1976d2', role: 'attacker' },
-                { id: 3, name: 'Шамиль Jr', number: '8', color: '#64b5f6', role: 'defender' }
-            ]
-        },
-        '3v3': {
-            teamA: [
-                { id: 0, name: 'Хабиб', number: '7', color: '#d32f2f', role: 'attacker' },
-                { id: 1, name: 'Азиз', number: '10', color: '#e57373', role: 'defender' },
-                { id: 4, name: 'Абдул', number: '5', color: '#f06292', role: 'goalkeeper' }
-            ],
-            teamB: [
-                { id: 2, name: 'Шамиль Рб', number: '4', color: '#1976d2', role: 'attacker' },
-                { id: 3, name: 'Шамиль Jr', number: '8', color: '#64b5f6', role: 'defender' },
-                { id: 5, name: 'Салаудин', number: '11', color: '#42a5f5', role: 'goalkeeper' }
-            ]
+    function getPlayerRating(playerId) {
+        if (selectedTab === 'quick') {
+            return PLAYER_DB[playerId] ? PLAYER_DB[playerId].rating : 50;
+        } else {
+            if (career.playerId === playerId) {
+                return career.rating;
+            }
+            return PLAYER_DB[playerId] ? PLAYER_DB[playerId].rating : 50;
         }
-    };
+    }
+
+    function getPlayerSpeedFromRating(rating) {
+        // 50 -> 1.0 (медленный), 99 -> 5.5 (очень быстрый)
+        return 1.0 + (rating - 50) * 0.09;
+    }
+
+    function getPlayerPowerFromRating(rating) {
+        return 2.0 + (rating - 50) * 0.07;
+    }
 
     // --- ПОСТРОЕНИЕ МЕНЮ ---
     function buildPlayerMenu() {
         const list = document.getElementById('player-list');
         list.innerHTML = '';
-        const data = PLAYER_DATA[selectedMode];
-        const all = [...data.teamA, ...data.teamB];
-        all.forEach(p => {
+        const ids = [0, 1, 2, 3, 4, 5];
+        ids.forEach(id => {
+            const p = PLAYER_DB[id];
+            const rating = getPlayerRating(id);
             const card = document.createElement('div');
             card.className = 'player-card';
             card.dataset.player = p.id;
             card.innerHTML = `
                 <span class="number">#${p.number}</span>
                 <span class="name">${p.name}</span>
+                <span class="rating">${rating}</span>
             `;
             card.addEventListener('click', function() {
                 document.querySelectorAll('.player-card').forEach(c => c.classList.remove('selected'));
@@ -480,62 +510,88 @@
         });
     }
 
-    // --- ИНИЦИАЛИЗАЦИЯ ИГРОКОВ С ПОЗИЦИЯМИ ---
+    // --- ИНИЦИАЛИЗАЦИЯ ИГРОКОВ ---
     function initPlayers() {
-        const playerStars = save.stars || 1;
-        const botStars = diffStars[selectedDifficulty] || 2;
-        const botSpeed = getSpeedFromStars(botStars);
-        const playerSpeed = getSpeedFromStars(playerStars);
-        const botPower = 2.5 + (botStars - 1) * 0.7;
-        const playerPower = 2.5 + (playerStars - 1) * 0.7;
+        const ids = [0, 1, 2, 3, 4, 5];
+        const teamA_ids = [0, 1, 5]; // Хабиб, Азиз, Абдул
+        const teamB_ids = [2, 3, 4]; // Шамиль Рб, Шамиль Jr, Салаудин
 
-        const data = PLAYER_DATA[selectedMode];
-        
-        // Определяем позиции
-        const teamA_data = data.teamA.map((p, index) => {
-            const isPlayer = p.id === selectedPlayer;
-            return {
-                ...p,
-                isPlayer: isPlayer,
-                team: 'A',
-                isGoalkeeper: p.role === 'goalkeeper',
-                speed: (isPlayer ? playerSpeed : botSpeed) * 1.6,
-                power: (isPlayer ? playerPower : botPower) * 1.4,
-                x: 0,
-                y: 0,
-                targetX: 0,
-                targetY: 0,
-                role: p.role
-            };
-        });
-        const teamB_data = data.teamB.map((p, index) => {
-            const isPlayer = p.id === selectedPlayer;
-            return {
-                ...p,
-                isPlayer: isPlayer,
-                team: 'B',
-                isGoalkeeper: p.role === 'goalkeeper',
-                speed: (isPlayer ? playerSpeed : botSpeed) * 1.6,
-                power: (isPlayer ? playerPower : botPower) * 1.4,
-                x: 0,
-                y: 0,
-                targetX: 0,
-                targetY: 0,
-                role: p.role
-            };
-        });
+        let teamA_data = [];
+        let teamB_data = [];
 
-        // Расставляем позиции для 3v3
+        if (selectedMode === '2v2') {
+            teamA_ids.forEach(id => {
+                const p = PLAYER_DB[id];
+                const rating = getPlayerRating(id);
+                teamA_data.push({
+                    ...p,
+                    isPlayer: p.id === selectedPlayer,
+                    team: 'A',
+                    isGoalkeeper: false,
+                    speed: getPlayerSpeedFromRating(rating) * 1.6,
+                    power: getPlayerPowerFromRating(rating) * 1.4,
+                    rating: rating,
+                    role: p.role
+                });
+            });
+            teamB_ids.forEach(id => {
+                const p = PLAYER_DB[id];
+                const rating = getPlayerRating(id);
+                teamB_data.push({
+                    ...p,
+                    isPlayer: p.id === selectedPlayer,
+                    team: 'B',
+                    isGoalkeeper: false,
+                    speed: getPlayerSpeedFromRating(rating) * 1.6,
+                    power: getPlayerPowerFromRating(rating) * 1.4,
+                    rating: rating,
+                    role: p.role
+                });
+            });
+        } else {
+            // 3v3 — все 6 игроков
+            ids.forEach(id => {
+                const p = PLAYER_DB[id];
+                const rating = getPlayerRating(id);
+                const isTeamA = teamA_ids.includes(id);
+                const data = {
+                    ...p,
+                    isPlayer: p.id === selectedPlayer,
+                    team: isTeamA ? 'A' : 'B',
+                    isGoalkeeper: false,
+                    speed: getPlayerSpeedFromRating(rating) * 1.6,
+                    power: getPlayerPowerFromRating(rating) * 1.4,
+                    rating: rating,
+                    role: p.role
+                };
+                if (isTeamA) teamA_data.push(data);
+                else teamB_data.push(data);
+            });
+        }
+
+        // Назначение вратарей
+        if (teamA_data.length > 0) {
+            const gkA = teamA_data[0];
+            gkA.isGoalkeeper = true;
+            gkA.x = 55;
+            gkA.y = H/2;
+        }
+        if (teamB_data.length > 0) {
+            const gkB = teamB_data[0];
+            gkB.isGoalkeeper = true;
+            gkB.x = W-55;
+            gkB.y = H/2;
+        }
+
+        // Расстановка позиций для 3v3
         if (selectedMode === '3v3') {
-            // Команда А (слева)
             teamA_data.forEach(p => {
-                if (p.role === 'goalkeeper') { p.x = 55; p.y = H/2; }
+                if (p.isGoalkeeper) { p.x = 55; p.y = H/2; }
                 else if (p.role === 'defender') { p.x = 120; p.y = H/2; }
                 else if (p.role === 'attacker') { p.x = 200; p.y = H/2 - 40; }
             });
-            // Команда Б (справа)
             teamB_data.forEach(p => {
-                if (p.role === 'goalkeeper') { p.x = W-55; p.y = H/2; }
+                if (p.isGoalkeeper) { p.x = W-55; p.y = H/2; }
                 else if (p.role === 'defender') { p.x = W-120; p.y = H/2; }
                 else if (p.role === 'attacker') { p.x = W-200; p.y = H/2 - 40; }
             });
@@ -549,7 +605,7 @@
                 p.x = W-120;
                 p.y = H/2 + (i === 0 ? -60 : 60);
             });
-            // Вратарь в 2v2 — первый игрок становится вратарём
+            // Вратарь — первый игрок
             if (teamA_data.length > 0) {
                 const gkA = teamA_data[0];
                 gkA.isGoalkeeper = true;
@@ -609,7 +665,7 @@
             }
         }
         if (target) {
-            const chance = 0.3 + (save.stars || 1) * 0.05 - diffTackle[selectedDifficulty] * 0.2;
+            const chance = 0.25 + (getPlayerRating(selectedPlayer) - 50) * 0.005;
             if (Math.random() < chance) {
                 ballOwner = player;
                 ball.x = player.x + 25;
@@ -642,7 +698,6 @@
                 targetY = H/2 + (Math.random()-0.5)*30;
             }
         } else {
-            // Защитник — ближе к своим воротам
             if (p.role === 'defender') {
                 const goalX = isTeamA ? 80 : W-80;
                 if (distToBall < 250) {
@@ -652,9 +707,7 @@
                     targetX = goalX;
                     targetY = H/2 + (Math.random()-0.5)*60;
                 }
-            }
-            // Нападающий — агрессивно к мячу
-            else if (p.role === 'attacker') {
+            } else {
                 if (distToBall < 350) {
                     targetX = ball.x + (Math.random()-0.5) * 60;
                     targetY = ball.y + (Math.random()-0.5) * 60;
@@ -662,7 +715,7 @@
                     targetX = ball.x;
                     targetY = ball.y;
                 }
-                if (ballOwner && distToBall < 45 && Math.random() < diffTackle[selectedDifficulty] * 0.5) {
+                if (ballOwner && distToBall < 45 && Math.random() < 0.3) {
                     ballOwner = p;
                     ball.x = p.x + 25;
                     ball.y = p.y;
@@ -746,10 +799,16 @@
         ctx.shadowBlur = 4;
         ctx.shadowColor = 'black';
         ctx.fillText(p.name, x, y - r - 4);
-        const starStr = isMy ? '⭐'.repeat(save.stars || 1) : '⭐'.repeat(diffStars[selectedDifficulty] || 2);
-        ctx.fillStyle = '#ffd700';
-        ctx.font = '8px sans-serif';
-        ctx.fillText(starStr, x, y - r - 14);
+        
+        // Рейтинг (цветной)
+        const rating = p.rating || 50;
+        let color = '#ff6b6b';
+        if (rating >= 80) color = '#4caf50';
+        else if (rating >= 70) color = '#ffd700';
+        else if (rating >= 60) color = '#ff9800';
+        ctx.fillStyle = color;
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText(rating, x, y - r - 18);
         ctx.shadowBlur = 0;
         
         if (p.isGoalkeeper) {
@@ -757,9 +816,8 @@
             ctx.font = '14px sans-serif';
             ctx.fillText('🧤', x + r + 10, y);
         }
-        // Роль
         if (!p.isGoalkeeper && !isMy) {
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
             ctx.font = '8px sans-serif';
             const roleLabel = p.role === 'attacker' ? '⚡' : '🛡️';
             ctx.fillText(roleLabel, x, y + r + 14);
@@ -886,8 +944,7 @@
         if (gameState !== 'playing' || !matchActive) return;
 
         const myPlayer = allPlayers.find(p => p.isPlayer === true);
-        const playerStars = save.stars || 1;
-        const speedBonus = 1 + (playerStars - 1) * 0.45; // 1⭐=1.0, 5⭐=2.8
+        const speedBonus = myPlayer ? getPlayerSpeedFromRating(myPlayer.rating) : 1;
 
         if (myPlayer && joystickActive) {
             const jx = joystickX, jy = joystickY;
@@ -929,7 +986,7 @@
 
         if (myPlayer && kickPressed && ballOwner === myPlayer) {
             const angle = Math.atan2(joystickY, joystickX);
-            const power = 7 + (save.stars || 1) * 2.0;
+            const power = 7 + (myPlayer.rating - 50) * 0.12;
             ball.vx = Math.cos(angle) * power * (0.9 + Math.random() * 0.2);
             ball.vy = Math.sin(angle) * power * (0.9 + Math.random() * 0.2);
             ballOwner = null;
@@ -1100,8 +1157,42 @@
         winnerDiv.style.display = 'block';
         restartBtn.style.display = 'block';
         menuBtn.style.display = 'block';
-        save.wins = (save.wins || 0) + (winner === 'A' ? 1 : winner === 'B' ? 1 : 0);
-        localStorage.setItem('matchcup_save', JSON.stringify(save));
+        
+        // Карьера: обновляем рейтинг
+        if (selectedTab === 'career' && selectedPlayer >= 0) {
+            const myPlayer = allPlayers.find(p => p.isPlayer);
+            if (myPlayer) {
+                const playerId = myPlayer.id;
+                if (career.playerId === playerId) {
+                    let ratingGain = 0;
+                    if (winner === 'A' && myPlayer.team === 'A') ratingGain += 1;
+                    if (winner === 'B' && myPlayer.team === 'B') ratingGain += 1;
+                    ratingGain += Math.floor(scoreA + scoreB) * 0.2;
+                    if (ratingGain > 0) {
+                        career.rating = Math.min(99, career.rating + ratingGain);
+                        career.wins += (winner === 'A' && myPlayer.team === 'A') ? 1 : (winner === 'B' && myPlayer.team === 'B') ? 1 : 0;
+                        career.goals += (myPlayer.team === 'A' ? scoreA : scoreB);
+                        saveCareer();
+                    }
+                } else {
+                    // Начинаем карьеру за этого игрока
+                    career.playerId = playerId;
+                    career.rating = PLAYER_DB[playerId].rating;
+                    career.wins = 0;
+                    career.goals = 0;
+                    career.achievements = [];
+                    if (winner === 'A' && myPlayer.team === 'A') {
+                        career.rating = Math.min(99, career.rating + 1);
+                        career.wins = 1;
+                    } else if (winner === 'B' && myPlayer.team === 'B') {
+                        career.rating = Math.min(99, career.rating + 1);
+                        career.wins = 1;
+                    }
+                    career.goals += (myPlayer.team === 'A' ? scoreA : scoreB);
+                    saveCareer();
+                }
+            }
+        }
     }
 
     function updateScoreDisplay() {
@@ -1118,6 +1209,19 @@
     }
 
     // --- СОБЫТИЯ ---
+    document.querySelectorAll('.tab-btn').forEach(el => {
+        el.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedTab = this.dataset.tab;
+            selectedPlayer = -1;
+            startBtn.disabled = true;
+            document.querySelectorAll('.diff-btn').forEach(b => b.disabled = true);
+            document.querySelectorAll('.player-card').forEach(c => c.classList.remove('selected'));
+            buildPlayerMenu();
+        });
+    });
+
     document.querySelectorAll('.mode-btn').forEach(el => {
         el.addEventListener('click', function() {
             document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
@@ -1152,7 +1256,8 @@
     resetBtn.addEventListener('click', function() {
         if (confirm('Сбросить весь прогресс?')) {
             localStorage.removeItem('matchcup_save');
-            save = { wins: 0, goals: 0, stars: 1 };
+            localStorage.removeItem('matchcup_career');
+            career = { playerId: null, rating: 50, wins: 0, goals: 0, achievements: [] };
             alert('Прогресс сброшен!');
         }
     });
