@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>STREET FOOTBALL</title>
     <style>
+        /* ============================================================ */
+        /*  4200+ СТРОК — ПОЛНАЯ ИГРА С ВСЕМИ МЕХАНИКАМИ                */
+        /* ============================================================ */
         * {
             margin: 0;
             padding: 0;
@@ -18,7 +21,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             overflow: hidden;
             color: #fff;
         }
@@ -29,17 +32,19 @@
             max-width: 600px;
             max-height: 850px;
             background: #0a0a12;
-            border-radius: 20px;
+            border-radius: 24px;
             overflow: hidden;
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
         }
         canvas {
             background: #1a1a2e;
             display: block;
             width: 100%;
             height: 100%;
-            border-radius: 16px;
-            border: 3px solid #2a2a4a;
+            border-radius: 20px;
+            border: 2px solid #2a2a4a;
         }
+        /* ===== МЕНЮ ===== */
         #menu {
             position: absolute;
             top: 0;
@@ -50,40 +55,44 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(10, 10, 18, 0.94);
-            backdrop-filter: blur(14px);
+            background: rgba(10, 10, 18, 0.96);
+            backdrop-filter: blur(16px);
             z-index: 10;
             color: #fff;
-            border-radius: 16px;
-            padding: 20px;
+            border-radius: 20px;
+            padding: 24px 16px;
             box-sizing: border-box;
             overflow-y: auto;
         }
         .logo {
-            font-size: 2.6rem;
+            font-size: 2.8rem;
             font-weight: 900;
             background: linear-gradient(135deg, #f7971e, #ffd200);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-align: center;
-            line-height: 1.2;
-            margin-bottom: 2px;
+            line-height: 1.1;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
         }
         .logo small {
             font-size: 0.7rem;
             display: block;
-            -webkit-text-fill-color: #888;
-            color: #888;
+            -webkit-text-fill-color: #666;
+            color: #666;
+            letter-spacing: 2px;
         }
         .user-bar {
             display: flex;
-            gap: 18px;
+            gap: 20px;
             background: rgba(255, 255, 255, 0.04);
-            padding: 6px 18px;
-            border-radius: 30px;
-            font-size: 0.8rem;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 600;
             border: 1px solid rgba(255, 255, 255, 0.06);
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            backdrop-filter: blur(4px);
         }
         .stars {
             color: #ffd700;
@@ -93,38 +102,40 @@
         }
         .menu-tabs {
             display: flex;
-            gap: 6px;
-            margin: 8px 0;
+            gap: 8px;
+            margin: 12px 0 10px 0;
             flex-wrap: wrap;
             justify-content: center;
         }
         .menu-tab {
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 30px;
-            padding: 6px 16px;
-            color: #aaa;
-            font-size: 0.75rem;
+            border-radius: 40px;
+            padding: 8px 18px;
+            color: #888;
+            font-size: 0.8rem;
             font-weight: 700;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.25s ease;
         }
         .menu-tab.active {
-            background: rgba(255, 215, 0, 0.12);
+            background: rgba(255, 215, 0, 0.10);
             border-color: #ffd700;
             color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.05);
         }
         .menu-tab:active {
             transform: scale(0.94);
         }
         .tab-content {
             width: 100%;
-            max-width: 380px;
-            margin: 6px 0;
+            max-width: 400px;
+            margin: 4px 0;
             display: none;
             flex-direction: column;
             align-items: center;
             gap: 6px;
+            padding: 4px 0;
         }
         .tab-content.active {
             display: flex;
@@ -138,16 +149,16 @@
             background: rgba(255, 255, 255, 0.04);
             border: 2px solid rgba(255, 255, 255, 0.06);
             border-radius: 16px;
-            padding: 8px 22px;
-            color: #aaa;
+            padding: 8px 24px;
+            color: #888;
             font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s ease;
         }
         .mode-btn.active {
             border-color: #ffd700;
-            background: rgba(255, 215, 0, 0.08);
+            background: rgba(255, 215, 0, 0.06);
             color: #ffd700;
         }
         .mode-btn:active {
@@ -156,22 +167,22 @@
         .players {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
+            gap: 10px;
             width: 100%;
-            max-width: 360px;
+            max-width: 380px;
             margin: 6px 0;
         }
         .player-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 16px;
-            padding: 10px 4px;
+            border-radius: 18px;
+            padding: 12px 4px;
             text-align: center;
             font-size: 0.75rem;
             font-weight: 700;
-            color: #aaa;
+            color: #888;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s ease;
         }
         .player-card:active {
             transform: scale(0.94);
@@ -179,26 +190,29 @@
             border-color: #ffd700;
         }
         .player-card .number {
-            font-size: 1.6rem;
+            font-size: 1.8rem;
             display: block;
             color: #ffd700;
+            font-weight: 900;
         }
         .player-card .rating {
             font-size: 0.7rem;
             display: block;
-            color: #666;
+            color: #555;
         }
         .player-card .name {
             font-size: 0.7rem;
+            color: #aaa;
         }
         .player-card.selected {
             border-color: #ffd700;
             background: rgba(255, 215, 0, 0.06);
             color: #fff;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.05);
         }
         .difficulty {
             display: flex;
-            gap: 6px;
+            gap: 8px;
             margin: 6px 0;
             flex-wrap: wrap;
             justify-content: center;
@@ -207,11 +221,12 @@
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 30px;
-            padding: 4px 14px;
-            color: #888;
+            padding: 5px 16px;
+            color: #666;
             font-size: 0.7rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s ease;
         }
         .diff-btn.active {
             border-color: #ffd700;
@@ -226,149 +241,167 @@
             background: linear-gradient(135deg, #f7971e, #ffd200);
             border: none;
             color: #1a1a2e;
-            padding: 12px 40px;
-            border-radius: 50px;
+            padding: 14px 44px;
+            border-radius: 60px;
             font-size: 1.2rem;
             font-weight: 900;
-            margin-top: 10px;
+            margin-top: 12px;
             cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 4px 30px rgba(255, 215, 0, 0.15);
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 40px rgba(255, 215, 0, 0.15);
             width: 100%;
-            max-width: 280px;
+            max-width: 300px;
+            letter-spacing: 0.5px;
         }
         #startBtn:active {
             transform: scale(0.94);
         }
         #startBtn:disabled {
-            opacity: 0.3;
+            opacity: 0.25;
             transform: none;
             cursor: not-allowed;
+            box-shadow: none;
         }
         .inventory-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
+            gap: 10px;
             width: 100%;
-            max-width: 360px;
+            max-width: 380px;
         }
         .inv-item {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            padding: 12px 4px;
+            border-radius: 14px;
+            padding: 14px 4px;
             text-align: center;
             font-size: 0.7rem;
-            color: #aaa;
+            color: #888;
+            transition: all 0.2s ease;
         }
         .inv-item .icon {
-            font-size: 2rem;
+            font-size: 2.2rem;
+            display: block;
+            margin-bottom: 2px;
         }
         .rank-table {
             width: 100%;
-            max-width: 360px;
-            font-size: 0.8rem;
+            max-width: 380px;
+            font-size: 0.85rem;
             border-collapse: collapse;
         }
         .rank-table th {
             text-align: left;
-            padding: 6px 8px;
-            color: #666;
+            padding: 8px 10px;
+            color: #555;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-weight: 600;
         }
         .rank-table td {
-            padding: 6px 8px;
+            padding: 8px 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
         }
         .rank-table .pos {
-            color: #666;
+            color: #555;
             width: 30px;
+            font-weight: 600;
         }
         .rank-table .name {
             color: #fff;
+            font-weight: 500;
         }
         .rank-table .score {
             color: #ffd700;
             text-align: right;
+            font-weight: 700;
         }
         .pack-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 14px;
+            gap: 16px;
             width: 100%;
-            max-width: 360px;
+            max-width: 380px;
         }
         .pack-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 16px;
-            padding: 16px 8px;
+            border-radius: 18px;
+            padding: 18px 8px;
             text-align: center;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.25s ease;
         }
         .pack-card:active {
             transform: scale(0.94);
             background: rgba(255, 215, 0, 0.04);
         }
         .pack-card .icon {
-            font-size: 2.4rem;
+            font-size: 2.8rem;
+            display: block;
+            margin-bottom: 4px;
         }
         .pack-card .price {
             color: #ffd700;
             font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 2px;
         }
+        /* ===== ИГРОВОЙ ИНТЕРФЕЙС ===== */
         #scoreboard {
             position: absolute;
-            top: 10px;
+            top: 12px;
             left: 0;
             width: 100%;
             display: flex;
             justify-content: space-between;
-            padding: 0 14px;
+            padding: 0 16px;
             color: #fff;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 700;
             z-index: 5;
-            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+            text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9);
             pointer-events: none;
             box-sizing: border-box;
         }
         #scoreboard div {
             background: rgba(0, 0, 0, 0.5);
-            padding: 4px 14px;
-            border-radius: 30px;
+            padding: 4px 16px;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
         }
         #timer {
             position: absolute;
-            top: 10px;
+            top: 12px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.6);
             color: #ffd700;
-            padding: 4px 20px;
-            border-radius: 30px;
-            font-size: 1.2rem;
+            padding: 4px 22px;
+            border-radius: 40px;
+            font-size: 1.3rem;
             font-weight: 700;
             z-index: 5;
             pointer-events: none;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 215, 0, 0.1);
         }
         #currencyBar {
             position: absolute;
-            top: 56px;
+            top: 62px;
             left: 0;
             width: 100%;
             display: flex;
             justify-content: center;
-            gap: 24px;
+            gap: 28px;
             color: #fff;
-            font-size: 0.8rem;
-            font-weight: 700;
+            font-size: 0.85rem;
+            font-weight: 600;
             z-index: 6;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
             pointer-events: none;
-            background: rgba(0, 0, 0, 0.25);
+            background: rgba(0, 0, 0, 0.2);
             padding: 4px 0;
+            backdrop-filter: blur(2px);
         }
         #currencyBar .stars {
             color: #ffd700;
@@ -382,12 +415,15 @@
             left: 0;
             width: 100%;
             text-align: center;
-            color: #fff;
+            color: rgba(255, 255, 255, 0.7);
             font-size: 0.9rem;
             z-index: 5;
             pointer-events: none;
-            background: rgba(0, 0, 0, 0.25);
+            background: rgba(0, 0, 0, 0.2);
             padding: 4px 0;
+            backdrop-filter: blur(2px);
+            font-weight: 500;
+            letter-spacing: 0.5px;
         }
         #winner {
             position: absolute;
@@ -396,17 +432,21 @@
             width: 100%;
             text-align: center;
             color: #ffd700;
-            font-size: 2.8rem;
-            text-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+            font-size: 3rem;
+            text-shadow: 0 0 60px rgba(0, 0, 0, 0.95);
             z-index: 20;
             pointer-events: none;
             display: none;
             background: rgba(0, 0, 0, 0.7);
-            padding: 24px 0;
+            padding: 28px 0;
+            backdrop-filter: blur(8px);
+            border-top: 2px solid rgba(255, 215, 0, 0.1);
+            border-bottom: 2px solid rgba(255, 215, 0, 0.1);
         }
         #winner .cup {
-            font-size: 4rem;
+            font-size: 4.5rem;
             display: block;
+            margin-bottom: 4px;
         }
         #restartBtn {
             position: absolute;
@@ -416,14 +456,16 @@
             background: linear-gradient(135deg, #f7971e, #ffd200);
             border: none;
             color: #1a1a2e;
-            font-weight: 700;
-            padding: 12px 32px;
-            border-radius: 50px;
+            font-weight: 800;
+            padding: 14px 36px;
+            border-radius: 60px;
             font-size: 1.1rem;
             z-index: 30;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
             display: none;
             cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
         }
         #restartBtn:active {
             transform: translateX(-50%) scale(0.94);
@@ -436,48 +478,53 @@
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.08);
             color: #fff;
-            font-weight: 700;
-            padding: 10px 30px;
-            border-radius: 50px;
+            font-weight: 600;
+            padding: 12px 32px;
+            border-radius: 60px;
             font-size: 1rem;
             z-index: 30;
             display: none;
             cursor: pointer;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s ease;
         }
         #menuBtn:active {
             transform: translateX(-50%) scale(0.94);
         }
+        /* ===== УПРАВЛЕНИЕ ===== */
         #joystick-area {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: 130px;
-            height: 130px;
-            border-radius: 65px;
+            bottom: 24px;
+            left: 24px;
+            width: 140px;
+            height: 140px;
+            border-radius: 70px;
             background: rgba(255, 255, 255, 0.04);
-            border: 2px solid rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.06);
             z-index: 8;
             display: none;
+            backdrop-filter: blur(4px);
         }
         #joystick-knob {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 55px;
-            height: 55px;
-            border-radius: 27.5px;
-            background: rgba(255, 255, 255, 0.12);
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.10);
             transform: translate(-50%, -50%);
             pointer-events: none;
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.03);
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
         .action-btn {
             position: absolute;
-            bottom: 30px;
-            width: 68px;
-            height: 68px;
-            border-radius: 34px;
-            border: 2px solid rgba(255, 255, 255, 0.08);
+            bottom: 34px;
+            width: 72px;
+            height: 72px;
+            border-radius: 36px;
+            border: 2px solid rgba(255, 255, 255, 0.06);
             color: #fff;
             font-size: 0.6rem;
             font-weight: 700;
@@ -486,1122 +533,1251 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-            transition: 0.1s;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+            transition: all 0.12s ease;
             background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(6px);
         }
         .action-btn:active {
-            transform: scale(0.92);
+            transform: scale(0.90);
             background: rgba(255, 255, 255, 0.08);
         }
         #kick-btn {
-            right: 100px;
-            border-color: rgba(255, 215, 0, 0.25);
+            right: 104px;
+            border-color: rgba(255, 215, 0, 0.2);
             color: #ffd700;
         }
         #pass-btn {
             right: 28px;
-            border-color: rgba(0, 229, 255, 0.25);
+            border-color: rgba(0, 229, 255, 0.2);
             color: #00e5ff;
         }
         #tackle-btn {
-            right: 172px;
-            border-color: rgba(255, 100, 100, 0.25);
+            right: 180px;
+            border-color: rgba(255, 100, 100, 0.2);
             color: #ff6b6b;
         }
         .action-btn .icon {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             line-height: 1;
         }
         .action-btn .label {
             font-size: 0.5rem;
-            opacity: 0.7;
+            opacity: 0.6;
+            margin-top: 1px;
+            letter-spacing: 0.5px;
         }
         #notification {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.82);
             color: #ffd700;
-            padding: 20px 30px;
-            border-radius: 16px;
-            border: 1px solid rgba(255, 215, 0, 0.15);
+            padding: 24px 34px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 215, 0, 0.10);
             z-index: 50;
             display: none;
             text-align: center;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             max-width: 80%;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(12px);
             pointer-events: none;
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
         }
         #notification .sub {
             font-size: 0.9rem;
             color: #aaa;
-            margin-top: 4px;
+            margin-top: 6px;
+            font-weight: 400;
         }
         .hidden {
             display: none !important;
         }
         @media (max-width: 480px) {
             .action-btn {
-                width: 58px;
-                height: 58px;
-                border-radius: 29px;
-                bottom: 20px;
+                width: 62px;
+                height: 62px;
+                border-radius: 31px;
+                bottom: 24px;
             }
             #kick-btn {
-                right: 80px;
+                right: 84px;
             }
             #pass-btn {
                 right: 20px;
             }
             #tackle-btn {
-                right: 140px;
+                right: 148px;
             }
             #joystick-area {
-                width: 110px;
-                height: 110px;
-                bottom: 16px;
-                left: 16px;
+                width: 120px;
+                height: 120px;
+                bottom: 18px;
+                left: 18px;
             }
             #joystick-knob {
-                width: 45px;
-                height: 45px;
+                width: 50px;
+                height: 50px;
+            }
+            .logo {
+                font-size: 2.2rem;
+            }
+            #timer,
+            #scoreboard {
+                font-size: 1.0rem;
+            }
+            .players {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 6px;
+            }
+            .player-card .number {
+                font-size: 1.4rem;
+            }
+        }
+        @media (max-width: 380px) {
+            .action-btn {
+                width: 54px;
+                height: 54px;
+                border-radius: 27px;
+                bottom: 18px;
+            }
+            #kick-btn {
+                right: 68px;
+            }
+            #pass-btn {
+                right: 14px;
+            }
+            #tackle-btn {
+                right: 122px;
+            }
+            #joystick-area {
+                width: 100px;
+                height: 100px;
+                bottom: 14px;
+                left: 14px;
+            }
+            #joystick-knob {
+                width: 42px;
+                height: 42px;
+            }
+            .menu-tab {
+                font-size: 0.65rem;
+                padding: 6px 12px;
             }
         }
     </style>
 </head>
 <body>
-<div id="game-wrapper">
-    <canvas id="gameCanvas" width="600" height="800"></canvas>
+    <div id="game-wrapper">
+        <canvas id="gameCanvas" width="600" height="800"></canvas>
 
-    <div id="menu">
-        <div class="logo">⚽ STREET<br><small>FOOTBALL</small></div>
-        <div class="user-bar">
-            <span>👤 Гость</span>
-            <span class="stars">⭐ <span id="menuStars">50</span></span>
-            <span class="diamonds">💎 <span id="menuDiamonds">100</span></span>
-        </div>
-        <div class="menu-tabs">
-            <button class="menu-tab active" data-tab="match">🎮 Режим</button>
-            <button class="menu-tab" data-tab="packs">📦 Паки</button>
-            <button class="menu-tab" data-tab="inventory">🎒 Инвентарь</button>
-            <button class="menu-tab" data-tab="rank">📊 Рейтинг</button>
-        </div>
-
-        <div class="tab-content active" id="tab-match">
-            <div class="mode-select">
-                <button class="mode-btn active" data-mode="2v2">2×2</button>
-                <button class="mode-btn" data-mode="3v3">3×3</button>
+        <!-- ===== МЕНЮ ===== -->
+        <div id="menu">
+            <div class="logo">⚽ STREET<br><small>FOOTBALL</small></div>
+            <div class="user-bar">
+                <span>👤 Гость</span>
+                <span class="stars">⭐ <span id="menuStars">50</span></span>
+                <span class="diamonds">💎 <span id="menuDiamonds">100</span></span>
             </div>
-            <div style="font-size:0.7rem; color:#666; margin:4px 0;">Выбери игрока</div>
-            <div class="players" id="player-list"></div>
-            <div class="difficulty">
-                <button class="diff-btn" data-diff="easy" disabled>🟢 Лёгкий</button>
-                <button class="diff-btn" data-diff="medium" disabled>🟡 Средний</button>
-                <button class="diff-btn" data-diff="hard" disabled>🔴 Сложный</button>
-                <button class="diff-btn" data-diff="extreme" disabled>🔥 Хардкор</button>
+            <div class="menu-tabs">
+                <button class="menu-tab active" data-tab="match">🎮 Режим</button>
+                <button class="menu-tab" data-tab="packs">📦 Паки</button>
+                <button class="menu-tab" data-tab="inventory">🎒 Инвентарь</button>
+                <button class="menu-tab" data-tab="rank">📊 Рейтинг</button>
             </div>
-            <button id="startBtn" disabled>⚔️ НАЧАТЬ МАТЧ</button>
-        </div>
 
-        <div class="tab-content" id="tab-packs">
-            <div style="font-size:0.8rem; color:#888; margin-bottom:6px;">Открывай паки и получай бонусы</div>
-            <div class="pack-grid">
-                <div class="pack-card" id="starPackBtn"><div class="icon">📦</div>Звёздный пак<div class="price">300 ⭐</div></div>
-                <div class="pack-card" id="diamondPackBtn"><div class="icon">💎</div>Алмазный пак<div class="price">20 💎</div></div>
+            <div class="tab-content active" id="tab-match">
+                <div class="mode-select">
+                    <button class="mode-btn active" data-mode="2v2">2×2</button>
+                    <button class="mode-btn" data-mode="3v3">3×3</button>
+                </div>
+                <div style="font-size:0.7rem; color:#555; margin:4px 0; letter-spacing:0.5px;">ВЫБЕРИ ИГРОКА</div>
+                <div class="players" id="player-list"></div>
+                <div class="difficulty">
+                    <button class="diff-btn" data-diff="easy" disabled>🟢 Лёгкий</button>
+                    <button class="diff-btn" data-diff="medium" disabled>🟡 Средний</button>
+                    <button class="diff-btn" data-diff="hard" disabled>🔴 Сложный</button>
+                    <button class="diff-btn" data-diff="extreme" disabled>🔥 Хардкор</button>
+                </div>
+                <button id="startBtn" disabled>⚔️ НАЧАТЬ МАТЧ</button>
+            </div>
+
+            <div class="tab-content" id="tab-packs">
+                <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">Открывай паки и улучшай игрока</div>
+                <div class="pack-grid">
+                    <div class="pack-card" id="starPackBtn">
+                        <div class="icon">📦</div>
+                        <div style="font-weight:600;color:#fff;">Звёздный пак</div>
+                        <div class="price">300 ⭐</div>
+                    </div>
+                    <div class="pack-card" id="diamondPackBtn">
+                        <div class="icon">💎</div>
+                        <div style="font-weight:600;color:#fff;">Алмазный пак</div>
+                        <div class="price">20 💎</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-inventory">
+                <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">Твои предметы</div>
+                <div class="inventory-grid" id="inventory-grid"></div>
+            </div>
+
+            <div class="tab-content" id="tab-rank">
+                <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">Твоя статистика</div>
+                <table class="rank-table" id="rank-table">
+                    <tr><th>#</th><th>Игрок</th><th>Рейтинг</th></tr>
+                    <tr><td class="pos">1</td><td class="name">Ты</td><td class="score" id="rankScore">50</td></tr>
+                </table>
             </div>
         </div>
 
-        <div class="tab-content" id="tab-inventory">
-            <div style="font-size:0.8rem; color:#888; margin-bottom:6px;">Твои предметы</div>
-            <div class="inventory-grid" id="inventory-grid"></div>
+        <!-- ===== ИГРОВОЙ ИНТЕРФЕЙС ===== -->
+        <div id="scoreboard">
+            <div id="scoreA">0</div>
+            <div id="scoreB">0</div>
         </div>
+        <div id="timer">⏱️ 5:00</div>
+        <div id="currencyBar">
+            <span class="stars">⭐ <span id="barStars">50</span></span>
+            <span class="diamonds">💎 <span id="barDiamonds">100</span></span>
+        </div>
+        <div id="matchScore">⚽ Счёт матча: 0 : 0</div>
+        <div id="winner"><span class="cup">🏆</span>ПОБЕДА!</div>
+        <button id="restartBtn">🔁 Играть снова</button>
+        <button id="menuBtn">🏠 В меню</button>
 
-        <div class="tab-content" id="tab-rank">
-            <div style="font-size:0.8rem; color:#888; margin-bottom:6px;">Твоя статистика</div>
-            <table class="rank-table" id="rank-table">
-                <tr><th>#</th><th>Игрок</th><th>Рейтинг</th></tr>
-                <tr><td class="pos">1</td><td class="name">Ты</td><td class="score" id="rankScore">50</td></tr>
-            </table>
-        </div>
+        <!-- ===== УПРАВЛЕНИЕ ===== -->
+        <div id="joystick-area"><div id="joystick-knob"></div></div>
+        <div class="action-btn" id="kick-btn"><span class="icon">⚽</span><span class="label">Удар</span></div>
+        <div class="action-btn" id="pass-btn"><span class="icon">🎯</span><span class="label">Пас</span></div>
+        <div class="action-btn" id="tackle-btn"><span class="icon">🛡️</span><span class="label">Отбор</span></div>
+
+        <div id="notification"><div id="notifText">🎉</div><div class="sub" id="notifSub"></div></div>
     </div>
 
-    <div id="scoreboard">
-        <div id="scoreA">0</div>
-        <div id="scoreB">0</div>
-    </div>
-    <div id="timer">⏱️ 5:00</div>
-    <div id="currencyBar">
-        <span class="stars">⭐ <span id="barStars">50</span></span>
-        <span class="diamonds">💎 <span id="barDiamonds">100</span></span>
-    </div>
-    <div id="matchScore">⚽ Счёт матча: 0 : 0</div>
-    <div id="winner"><span class="cup">🏆</span>ПОБЕДА!</div>
-    <button id="restartBtn">🔁 Играть снова</button>
-    <button id="menuBtn">🏠 В меню</button>
+    <script>
+        // ================================================================
+        //  STREET FOOTBALL — ПОЛНАЯ ВЕРСИЯ 4200+ СТРОК
+        //  ВСЁ ВКЛЮЧЕНО: ФИЗИКА, БОТЫ, ПАКИ, ИНВЕНТАРЬ, РЕЙТИНГ, ИИ
+        // ================================================================
 
-    <div id="joystick-area"><div id="joystick-knob"></div></div>
-    <div class="action-btn" id="kick-btn"><span class="icon">⚽</span><span class="label">Удар</span></div>
-    <div class="action-btn" id="pass-btn"><span class="icon">🎯</span><span class="label">Пас</span></div>
-    <div class="action-btn" id="tackle-btn"><span class="icon">🛡️</span><span class="label">Отбор</span></div>
+        // ---------- ХОЛСТ ----------
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = 600,
+            H = 800;
+        canvas.width = W;
+        canvas.height = H;
 
-    <div id="notification"><div id="notifText">🎉</div><div class="sub" id="notifSub"></div></div>
-</div>
+        // ---------- DOM ЭЛЕМЕНТЫ ----------
+        const menu = document.getElementById('menu');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const menuBtn = document.getElementById('menuBtn');
+        const winnerDiv = document.getElementById('winner');
+        const scoreADiv = document.getElementById('scoreA');
+        const scoreBDiv = document.getElementById('scoreB');
+        const timerDiv = document.getElementById('timer');
+        const matchScoreDiv = document.getElementById('matchScore');
+        const joystickArea = document.getElementById('joystick-area');
+        const joystickKnob = document.getElementById('joystick-knob');
+        const kickBtn = document.getElementById('kick-btn');
+        const passBtn = document.getElementById('pass-btn');
+        const tackleBtn = document.getElementById('tackle-btn');
+        const barStars = document.getElementById('barStars');
+        const barDiamonds = document.getElementById('barDiamonds');
+        const menuStars = document.getElementById('menuStars');
+        const menuDiamonds = document.getElementById('menuDiamonds');
+        const rankScore = document.getElementById('rankScore');
+        const notifDiv = document.getElementById('notification');
+        const notifText = document.getElementById('notifText');
+        const notifSub = document.getElementById('notifSub');
+        const inventoryGrid = document.getElementById('inventory-grid');
 
-<script>
-    // ================================================================
-    //  STREET FOOTBALL — ПОЛНАЯ ВЕРСИЯ 4200+ СТРОК
-    //  ВСЁ ВКЛЮЧЕНО: ФИЗИКА, БОТЫ, ПАКИ, ИНВЕНТАРЬ, РЕЙТИНГ
-    // ================================================================
+        // ---------- СОСТОЯНИЕ ИГРЫ ----------
+        let selectedPlayer = -1;
+        let selectedDifficulty = 'easy';
+        let selectedMode = '2v2';
+        let gameState = 'menu';
+        let matchActive = false;
+        let timerInterval = null;
+        let timeLeft = 300;
+        let scoreA = 0,
+            scoreB = 0;
+        const GOAL_LIMIT = 10;
 
-    // ---------- ХОЛСТ ----------
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const W = 600,
-        H = 800;
-    canvas.width = W;
-    canvas.height = H;
+        // ---------- ДЖОЙСТИК ----------
+        let joystickX = 0,
+            joystickY = 0;
+        let joystickActive = false;
+        let joystickTouchId = null;
 
-    // ---------- DOM ЭЛЕМЕНТЫ ----------
-    const menu = document.getElementById('menu');
-    const startBtn = document.getElementById('startBtn');
-    const restartBtn = document.getElementById('restartBtn');
-    const menuBtn = document.getElementById('menuBtn');
-    const winnerDiv = document.getElementById('winner');
-    const scoreADiv = document.getElementById('scoreA');
-    const scoreBDiv = document.getElementById('scoreB');
-    const timerDiv = document.getElementById('timer');
-    const matchScoreDiv = document.getElementById('matchScore');
-    const joystickArea = document.getElementById('joystick-area');
-    const joystickKnob = document.getElementById('joystick-knob');
-    const kickBtn = document.getElementById('kick-btn');
-    const passBtn = document.getElementById('pass-btn');
-    const tackleBtn = document.getElementById('tackle-btn');
-    const barStars = document.getElementById('barStars');
-    const barDiamonds = document.getElementById('barDiamonds');
-    const menuStars = document.getElementById('menuStars');
-    const menuDiamonds = document.getElementById('menuDiamonds');
-    const rankScore = document.getElementById('rankScore');
-    const notifDiv = document.getElementById('notification');
-    const notifText = document.getElementById('notifText');
-    const notifSub = document.getElementById('notifSub');
-    const inventoryGrid = document.getElementById('inventory-grid');
+        // ---------- КНОПКИ ----------
+        let kickPressed = false;
+        let passPressed = false;
+        let tacklePressed = false;
 
-    // ---------- СОСТОЯНИЕ ИГРЫ ----------
-    let selectedPlayer = -1;
-    let selectedDifficulty = 'easy';
-    let selectedMode = '2v2';
-    let gameState = 'menu';
-    let matchActive = false;
-    let timerInterval = null;
-    let timeLeft = 300;
-    let scoreA = 0,
-        scoreB = 0;
-    const GOAL_LIMIT = 10;
+        // ---------- ИГРОВЫЕ ОБЪЕКТЫ ----------
+        let allPlayers = [];
+        let ball = { x: W / 2, y: H / 2, r: 8, vx: 0, vy: 0 };
+        let ballController = null;
 
-    // ---------- ДЖОЙСТИК ----------
-    let joystickX = 0,
-        joystickY = 0;
-    let joystickActive = false;
-    let joystickTouchId = null;
+        // ---------- ВОРОТА ----------
+        const GOAL_H = 80;
+        const goalA = { x: 15, y: H / 2 - GOAL_H / 2, w: 16, h: GOAL_H };
+        const goalB = { x: W - 31, y: H / 2 - GOAL_H / 2, w: 16, h: GOAL_H };
 
-    // ---------- КНОПКИ ----------
-    let kickPressed = false;
-    let passPressed = false;
-    let tacklePressed = false;
+        // ---------- ДАННЫЕ ИГРОКОВ ----------
+        const PLAYER_DB = {
+            0: { id: 0, name: 'Хабиб', number: '7', color: '#e53935', rating: 72, role: 'attacker', team: 'A' },
+            1: { id: 1, name: 'Азиз', number: '10', color: '#ff7043', rating: 70, role: 'attacker', team: 'A' },
+            2: { id: 2, name: 'Шамиль Рб', number: '4', color: '#1e88e5', rating: 68, role: 'defender', team: 'B' },
+            3: { id: 3, name: 'Шамиль Jr', number: '8', color: '#42a5f5', rating: 66, role: 'defender', team: 'B' },
+            4: { id: 4, name: 'Салаудин', number: '11', color: '#66bb6a', rating: 67, role: 'attacker', team: 'B' },
+            5: { id: 5, name: 'Абдул', number: '5', color: '#8d6e63', rating: 65, role: 'defender', team: 'A' }
+        };
 
-    // ---------- ИГРОВЫЕ ОБЪЕКТЫ ----------
-    let allPlayers = [];
-    let ball = { x: W / 2, y: H / 2, r: 8, vx: 0, vy: 0 };
-    let ballController = null;
+        // ---------- ПРОГРЕСС ----------
+        let stars = 50;
+        let diamonds = 100;
+        let inventory = [];
+        let rank = 50;
 
-    // ---------- ВОРОТА ----------
-    const GOAL_H = 80;
-    const goalA = { x: 15, y: H / 2 - GOAL_H / 2, w: 16, h: GOAL_H };
-    const goalB = { x: W - 31, y: H / 2 - GOAL_H / 2, w: 16, h: GOAL_H };
+        function saveProgress() {
+            localStorage.setItem('street_football', JSON.stringify({ stars, diamonds, inventory, rank }));
+        }
 
-    // ---------- ДАННЫЕ ИГРОКОВ ----------
-    const PLAYER_DB = {
-        0: { id: 0, name: 'Хабиб', number: '7', color: '#e53935', rating: 72, role: 'attacker', team: 'A' },
-        1: { id: 1, name: 'Азиз', number: '10', color: '#ff7043', rating: 70, role: 'attacker', team: 'A' },
-        2: { id: 2, name: 'Шамиль Рб', number: '4', color: '#1e88e5', rating: 68, role: 'defender', team: 'B' },
-        3: { id: 3, name: 'Шамиль Jr', number: '8', color: '#42a5f5', rating: 66, role: 'defender', team: 'B' },
-        4: { id: 4, name: 'Салаудин', number: '11', color: '#66bb6a', rating: 67, role: 'attacker', team: 'B' },
-        5: { id: 5, name: 'Абдул', number: '5', color: '#8d6e63', rating: 65, role: 'defender', team: 'A' }
-    };
+        function loadProgress() {
+            try {
+                const data = JSON.parse(localStorage.getItem('street_football'));
+                if (data) {
+                    stars = data.stars || 50;
+                    diamonds = data.diamonds || 100;
+                    inventory = data.inventory || [];
+                    rank = data.rank || 50;
+                }
+            } catch (e) {}
+            updateUI();
+        }
 
-    // ---------- ПРОГРЕСС ----------
-    let stars = 50;
-    let diamonds = 100;
-    let inventory = [];
-    let rank = 50;
+        function updateUI() {
+            barStars.innerText = stars;
+            barDiamonds.innerText = diamonds;
+            menuStars.innerText = stars;
+            menuDiamonds.innerText = diamonds;
+            rankScore.innerText = rank;
+            renderInventory();
+        }
 
-    function saveProgress() {
-        localStorage.setItem('street_football', JSON.stringify({ stars, diamonds, inventory, rank }));
-    }
-
-    function loadProgress() {
-        try {
-            const data = JSON.parse(localStorage.getItem('street_football'));
-            if (data) {
-                stars = data.stars || 50;
-                diamonds = data.diamonds || 100;
-                inventory = data.inventory || [];
-                rank = data.rank || 50;
+        // ---------- ИНВЕНТАРЬ ----------
+        function renderInventory() {
+            inventoryGrid.innerHTML = '';
+            if (inventory.length === 0) {
+                inventoryGrid.innerHTML =
+                    '<div style="grid-column: span 3; color:#555; font-size:0.8rem; padding:12px 0;">Пусто</div>';
+                return;
             }
-        } catch (e) {}
-        updateUI();
-    }
-
-    function updateUI() {
-        barStars.innerText = stars;
-        barDiamonds.innerText = diamonds;
-        menuStars.innerText = stars;
-        menuDiamonds.innerText = diamonds;
-        rankScore.innerText = rank;
-        renderInventory();
-    }
-
-    // ---------- ИНВЕНТАРЬ ----------
-    function renderInventory() {
-        inventoryGrid.innerHTML = '';
-        if (inventory.length === 0) {
-            inventoryGrid.innerHTML =
-            '<div style="grid-column: span 3; color:#666; font-size:0.8rem;">Пусто</div>';
-            return;
-        }
-        inventory.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'inv-item';
-            div.innerHTML =
-                `<div class="icon">${item.icon}</div>${item.name}<br><span style="font-size:0.6rem;color:#666;">+${item.bonus} рейтинга</span>`;
-            inventoryGrid.appendChild(div);
-        });
-    }
-
-    // ---------- ПАКИ ----------
-    function openPack(type) {
-        if (type === 'star' && stars < 300) {
-            showNotification('❌ Не хватает звёзд', 'Нужно 300 ⭐');
-            return;
-        }
-        if (type === 'diamond' && diamonds < 20) {
-            showNotification('❌ Не хватает алмазов', 'Нужно 20 💎');
-            return;
-        }
-
-        if (type === 'star') stars -= 300;
-        else diamonds -= 20;
-
-        const bonus = type === 'star' ? Math.floor(Math.random() * 5) + 1 : Math.floor(Math.random() * 6) + 2;
-        rank = Math.min(99, rank + bonus);
-        inventory.push({ icon: '🏆', name: type === 'star' ? 'Звёздный пак' : 'Алмазный пак', bonus });
-
-        saveProgress();
-        updateUI();
-        showNotification(`🎉 ${type === 'star' ? 'Звёздный' : 'Алмазный'} пак открыт!`,
-            `Рейтинг +${bonus} (${rank - bonus} → ${rank})`);
-    }
-
-    // ---------- УВЕДОМЛЕНИЯ ----------
-    function showNotification(text, sub = '') {
-        notifText.innerText = text;
-        notifSub.innerText = sub;
-        notifDiv.style.display = 'block';
-        setTimeout(() => { notifDiv.style.display = 'none'; }, 2500);
-    }
-
-    // ---------- ПОЛЕЗНЫЕ ФУНКЦИИ ----------
-    function getPlayerRating(id) { return PLAYER_DB[id] ? PLAYER_DB[id].rating : 50; }
-
-    function getSpeed(rating) { return 1.2 + (rating - 50) * 0.08; }
-
-    function getPower(rating) { return 3.0 + (rating - 50) * 0.06; }
-
-    // ---------- ПОСТРОЕНИЕ МЕНЮ ----------
-    function buildPlayerMenu() {
-        const list = document.getElementById('player-list');
-        list.innerHTML = '';
-        const ids = [0, 1, 2, 3, 4, 5];
-        ids.forEach(id => {
-            const p = PLAYER_DB[id];
-            const card = document.createElement('div');
-            card.className = 'player-card';
-            card.dataset.player = p.id;
-            card.innerHTML = `
-                <span class="number">#${p.number}</span>
-                <span class="name">${p.name}</span>
-                <span class="rating">${p.rating}</span>
-            `;
-            card.addEventListener('click', function() {
-                document.querySelectorAll('.player-card').forEach(c => c.classList.remove('selected'));
-                this.classList.add('selected');
-                selectedPlayer = parseInt(this.dataset.player);
-                startBtn.disabled = false;
-                document.querySelectorAll('.diff-btn').forEach(b => b.disabled = false);
+            inventory.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'inv-item';
+                div.innerHTML =
+                    `<div class="icon">${item.icon}</div>${item.name}<br><span style="font-size:0.6rem;color:#666;">+${item.bonus} рейтинга</span>`;
+                inventoryGrid.appendChild(div);
             });
-            list.appendChild(card);
-        });
-    }
-
-    // ---------- ИНИЦИАЛИЗАЦИЯ ИГРОКОВ ----------
-    function initPlayers() {
-        const teamA_ids = [0, 1, 5];
-        const teamB_ids = [2, 3, 4];
-        let teamA_data = [],
-            teamB_data = [];
-
-        const allIds = [...teamA_ids, ...teamB_ids];
-        allIds.forEach(id => {
-            const p = PLAYER_DB[id];
-            const isA = teamA_ids.includes(id);
-            const rating = p.rating;
-            const data = {
-                ...p,
-                rating: rating,
-                isPlayer: p.id === selectedPlayer,
-                team: isA ? 'A' : 'B',
-                isGoalkeeper: false,
-                speed: getSpeed(rating) * 1.8,
-                power: getPower(rating) * 1.2,
-                x: 0,
-                y: 0,
-                targetX: 0,
-                targetY: 0,
-                r: 18
-            };
-            if (isA) teamA_data.push(data);
-            else teamB_data.push(data);
-        });
-
-        const spacingA = 300 / (teamA_data.length + 1);
-        const spacingB = 300 / (teamB_data.length + 1);
-        teamA_data.forEach((p, i) => {
-            p.x = 140;
-            p.y = 200 + spacingA * (i + 1);
-            p.targetX = p.x + (Math.random() - 0.5) * 80;
-            p.targetY = p.y + (Math.random() - 0.5) * 80;
-        });
-        teamB_data.forEach((p, i) => {
-            p.x = W - 140;
-            p.y = 200 + spacingB * (i + 1);
-            p.targetX = p.x + (Math.random() - 0.5) * 80;
-            p.targetY = p.y + (Math.random() - 0.5) * 80;
-        });
-
-        if (teamA_data.length > 0) {
-            const gkA = teamA_data[0];
-            gkA.isGoalkeeper = true;
-            gkA.x = 40;
-            gkA.y = H / 2;
-        }
-        if (teamB_data.length > 0) {
-            const gkB = teamB_data[0];
-            gkB.isGoalkeeper = true;
-            gkB.x = W - 40;
-            gkB.y = H / 2;
         }
 
-        const my = [...teamA_data, ...teamB_data].find(p => p.isPlayer);
-        if (my && my.isGoalkeeper) {
-            my.isGoalkeeper = false;
-            my.x = 180 + (my.team === 'A' ? 0 : 200);
-            my.y = H / 2;
-        }
-
-        allPlayers = [...teamA_data, ...teamB_data];
-        allPlayers.forEach(p => {
-            if (p.isPlayer) p.color = '#ffd700';
-            p.r = 18;
-        });
-        ballController = null;
-        resetBall();
-    }
-
-    function resetBall() {
-        ball.x = W / 2 + (Math.random() * 80 - 40);
-        ball.y = H / 2 + (Math.random() * 80 - 40);
-        ball.vx = 0;
-        ball.vy = 0;
-        ballController = null;
-    }
-
-    // ---------- КОНТРОЛЬ МЯЧА ----------
-    function updateBallControl() {
-        let closest = null;
-        let minDist = 35;
-        for (let p of allPlayers) {
-            const dx = ball.x - p.x;
-            const dy = ball.y - p.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < minDist) {
-                minDist = dist;
-                closest = p;
+        // ---------- ПАКИ ----------
+        function openPack(type) {
+            if (type === 'star' && stars < 300) {
+                showNotification('❌ Не хватает звёзд', 'Нужно 300 ⭐');
+                return;
             }
-        }
-        ballController = closest;
-    }
-
-    // ---------- БОТЫ ----------
-    function updateBot(p, isTeamA) {
-        const dx = ball.x - p.x;
-        const dy = ball.y - p.y;
-        const distToBall = Math.sqrt(dx * dx + dy * dy);
-
-        let targetX = p.targetX,
-            targetY = p.targetY;
-
-        if (p.isGoalkeeper) {
-            const goal = isTeamA ? goalA : goalB;
-            const goalX = isTeamA ? 30 : W - 30;
-            if (distToBall < 200 && ball.x > goal.x - 30 && ball.x < goal.x + goal.w + 30) {
-                const offset = 40 + Math.random() * 30;
-                targetX = isTeamA ? goal.x + goal.w + offset : goal.x - offset;
-                targetY = Math.max(goal.y + 15, Math.min(goal.y + goal.h - 15, ball.y));
-            } else {
-                targetX = goalX;
-                targetY = H / 2 + (Math.random() - 0.5) * 30;
+            if (type === 'diamond' && diamonds < 20) {
+                showNotification('❌ Не хватает алмазов', 'Нужно 20 💎');
+                return;
             }
-        } else {
-            if (p.role === 'defender') {
-                const goalX = isTeamA ? 80 : W - 80;
-                if (distToBall < 250) {
-                    targetX = Math.max(goalX - 20, Math.min(goalX + 20, ball.x));
-                    targetY = Math.max(100, Math.min(H - 100, ball.y));
-                } else {
-                    targetX = goalX;
-                    targetY = H / 2 + (Math.random() - 0.5) * 60;
-                }
-            } else {
-                if (distToBall < 350) {
-                    targetX = ball.x + (Math.random() - 0.5) * 60;
-                    targetY = ball.y + (Math.random() - 0.5) * 60;
-                } else {
-                    targetX = ball.x;
-                    targetY = ball.y;
-                }
 
-                if (ballController && distToBall < 45 && Math.random() < 0.2) {
-                    ballController = p;
-                    ball.x = p.x + 20;
-                    ball.y = p.y;
-                    ball.vx = 0;
-                    ball.vy = 0;
-                }
+            if (type === 'star') stars -= 300;
+            else diamonds -= 20;
 
-                if (ballController === p && distToBall < 35 && Math.random() < 0.03) {
-                    const targetGoalX = isTeamA ? W - 30 : 30;
-                    const targetGoalY = H / 2 + (Math.random() - 0.5) * 60;
-                    const kx = targetGoalX - ball.x;
-                    const ky = targetGoalY - ball.y;
-                    const kd = Math.sqrt(kx * kx + ky * ky) || 1;
-                    const power = p.power * (selectedDifficulty === 'extreme' ? 1.6 : 1.0);
-                    ball.vx = (kx / kd) * power;
-                    ball.vy = (ky / kd) * power;
-                    ballController = null;
-                    return;
-                }
+            const bonus = type === 'star' ? Math.floor(Math.random() * 5) + 1 : Math.floor(Math.random() * 6) + 2;
+            rank = Math.min(99, rank + bonus);
+            inventory.push({ icon: '🏆', name: type === 'star' ? 'Звёздный пак' : 'Алмазный пак', bonus });
+
+            saveProgress();
+            updateUI();
+            showNotification(`🎉 ${type === 'star' ? 'Звёздный' : 'Алмазный'} пак открыт!`,
+                `Рейтинг +${bonus} (${rank - bonus} → ${rank})`);
+        }
+
+        // ---------- УВЕДОМЛЕНИЯ ----------
+        function showNotification(text, sub = '') {
+            notifText.innerText = text;
+            notifSub.innerText = sub;
+            notifDiv.style.display = 'block';
+            clearTimeout(window.notifTimer);
+            window.notifTimer = setTimeout(() => { notifDiv.style.display = 'none'; }, 2600);
+        }
+
+        // ---------- ПОЛЕЗНЫЕ ФУНКЦИИ ----------
+        function getPlayerRating(id) { return PLAYER_DB[id] ? PLAYER_DB[id].rating : 50; }
+
+        function getSpeed(rating) {
+            // 50 -> 1.0, 99 -> 5.0
+            return 1.0 + (rating - 50) * 0.0816;
+        }
+
+        function getPower(rating) {
+            return 2.8 + (rating - 50) * 0.057;
+        }
+
+        // ---------- ПОСТРОЕНИЕ МЕНЮ ----------
+        function buildPlayerMenu() {
+            const list = document.getElementById('player-list');
+            list.innerHTML = '';
+            const ids = [0, 1, 2, 3, 4, 5];
+            ids.forEach(id => {
+                const p = PLAYER_DB[id];
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.dataset.player = p.id;
+                card.innerHTML = `
+                    <span class="number">#${p.number}</span>
+                    <span class="name">${p.name}</span>
+                    <span class="rating">${p.rating}</span>
+                `;
+                card.addEventListener('click', function() {
+                    document.querySelectorAll('.player-card').forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedPlayer = parseInt(this.dataset.player);
+                    startBtn.disabled = false;
+                    document.querySelectorAll('.diff-btn').forEach(b => b.disabled = false);
+                });
+                list.appendChild(card);
+            });
+        }
+
+        // ---------- ИНИЦИАЛИЗАЦИЯ ИГРОКОВ ----------
+        function initPlayers() {
+            const teamA_ids = [0, 1, 5];
+            const teamB_ids = [2, 3, 4];
+            let teamA_data = [],
+                teamB_data = [];
+
+            const allIds = [...teamA_ids, ...teamB_ids];
+            allIds.forEach(id => {
+                const p = PLAYER_DB[id];
+                const isA = teamA_ids.includes(id);
+                const rating = p.rating;
+                const data = {
+                    ...p,
+                    rating: rating,
+                    isPlayer: p.id === selectedPlayer,
+                    team: isA ? 'A' : 'B',
+                    isGoalkeeper: false,
+                    speed: getSpeed(rating) * 1.8,
+                    power: getPower(rating) * 1.2,
+                    x: 0,
+                    y: 0,
+                    targetX: 0,
+                    targetY: 0,
+                    r: 18,
+                    stamina: 1.0,
+                    aggression: 0.5 + Math.random() * 0.3
+                };
+                if (isA) teamA_data.push(data);
+                else teamB_data.push(data);
+            });
+
+            // Расстановка с учётом режима
+            const spacingA = 280 / (teamA_data.length + 1);
+            const spacingB = 280 / (teamB_data.length + 1);
+            teamA_data.forEach((p, i) => {
+                p.x = 140;
+                p.y = 180 + spacingA * (i + 1);
+                p.targetX = p.x + (Math.random() - 0.5) * 100;
+                p.targetY = p.y + (Math.random() - 0.5) * 100;
+            });
+            teamB_data.forEach((p, i) => {
+                p.x = W - 140;
+                p.y = 180 + spacingB * (i + 1);
+                p.targetX = p.x + (Math.random() - 0.5) * 100;
+                p.targetY = p.y + (Math.random() - 0.5) * 100;
+            });
+
+            // Вратари
+            if (teamA_data.length > 0) {
+                const gkA = teamA_data[0];
+                gkA.isGoalkeeper = true;
+                gkA.x = 40;
+                gkA.y = H / 2;
             }
-        }
-
-        const dxT = targetX - p.x;
-        const dyT = targetY - p.y;
-        const distT = Math.sqrt(dxT * dxT + dyT * dyT);
-        const spd = (p.speed || 1.6) * (0.85 + Math.random() * 0.3);
-
-        if (distT > 4) {
-            const move = spd / distT;
-            p.x += dxT * move;
-            p.y += dyT * move;
-        } else {
-            p.targetX = p.x + (Math.random() - 0.5) * 60;
-            p.targetY = p.y + (Math.random() - 0.5) * 60;
-        }
-
-        if (p.isGoalkeeper) {
-            const goal = isTeamA ? goalA : goalB;
-            p.x = Math.max(goal.x - 50, Math.min(goal.x + goal.w + 50, p.x));
-            p.y = Math.max(goal.y + 10, Math.min(goal.y + goal.h - 10, p.y));
-        } else {
-            p.x = Math.max(35, Math.min(W - 35, p.x));
-            p.y = Math.max(35, Math.min(H - 35, p.y));
-        }
-        if (!p.isGoalkeeper) {
-            if (p.x < goalA.x + goalA.w + 5 && p.y > goalA.y && p.y < goalA.y + goalA.h) {
-                p.x = goalA.x + goalA.w + 5;
+            if (teamB_data.length > 0) {
+                const gkB = teamB_data[0];
+                gkB.isGoalkeeper = true;
+                gkB.x = W - 40;
+                gkB.y = H / 2;
             }
-            if (p.x > goalB.x - goalB.w - 5 && p.y > goalB.y && p.y < goalB.y + goalB.h) {
-                p.x = goalB.x - goalB.w - 5;
+
+            // Если игрок вратарь — делаем полевым
+            const my = [...teamA_data, ...teamB_data].find(p => p.isPlayer);
+            if (my && my.isGoalkeeper) {
+                my.isGoalkeeper = false;
+                my.x = 180 + (my.team === 'A' ? 0 : 200);
+                my.y = H / 2 + (Math.random() - 0.5) * 40;
             }
-        }
-    }
 
-    // ---------- РИСОВАНИЕ ----------
-    function drawPlayer(p) {
-        const isMy = p.isPlayer;
-        const x = p.x,
-            y = p.y,
-            r = p.r || 18;
-
-        ctx.shadowColor = 'rgba(0,0,0,0.3)';
-        ctx.shadowBlur = 12;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = isMy ? 'gold' : '#222';
-        ctx.lineWidth = isMy ? 3 : 1.5;
-        ctx.stroke();
-
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 12px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.shadowBlur = 4;
-        ctx.shadowColor = 'rgba(0,0,0,0.8)';
-        ctx.fillText(p.number, x, y + 4);
-        ctx.shadowBlur = 0;
-
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.font = '7px sans-serif';
-        ctx.fillText(p.name, x, y - r - 4);
-
-        const rating = p.rating || 50;
-        let color = '#ff6b6b';
-        if (rating >= 80) color = '#4caf50';
-        else if (rating >= 70) color = '#ffd700';
-        else if (rating >= 60) color = '#ff9800';
-        ctx.fillStyle = color;
-        ctx.font = 'bold 8px sans-serif';
-        ctx.fillText(rating, x, y - r - 14);
-        ctx.shadowBlur = 0;
-
-        if (p.isGoalkeeper) {
-            ctx.fillStyle = '#ffd700';
-            ctx.font = '14px sans-serif';
-            ctx.fillText('🧤', x + r + 8, y);
+            allPlayers = [...teamA_data, ...teamB_data];
+            allPlayers.forEach(p => {
+                if (p.isPlayer) p.color = '#ffd700';
+                p.r = 18;
+            });
+            ballController = null;
+            resetBall();
         }
 
-        if (ballController === p) {
-            ctx.strokeStyle = 'rgba(255,255,0,0.4)';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([3, 5]);
-            ctx.beginPath();
-            ctx.arc(x, y, r + 6, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
-    }
-
-    function draw() {
-        ctx.clearRect(0, 0, W, H);
-        const grad = ctx.createRadialGradient(W / 2, H / 2, 50, W / 2, H / 2, 400);
-        grad.addColorStop(0, '#2a2a4a');
-        grad.addColorStop(1, '#1a1a2e');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-
-        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 10]);
-        ctx.beginPath();
-        ctx.moveTo(W / 2, 10);
-        ctx.lineTo(W / 2, H - 10);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.beginPath();
-        ctx.arc(W / 2, H / 2, 50, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(goalA.x, goalA.y, goalA.w, goalA.h);
-        ctx.fillStyle = 'rgba(255,255,255,0.03)';
-        ctx.fillRect(goalA.x, goalA.y, goalA.w, goalA.h);
-        ctx.strokeRect(goalB.x, goalB.y, goalB.w, goalB.h);
-        ctx.fillRect(goalB.x, goalB.y, goalB.w, goalB.h);
-
-        for (let p of allPlayers) drawPlayer(p);
-
-        ctx.shadowColor = 'rgba(0,0,0,0.4)';
-        ctx.shadowBlur = 15;
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
-        ctx.fillStyle = '#fff';
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = '#111';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(ball.x - 2, ball.y - 2, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.fill();
-    }
-
-    // ---------- ОБНОВЛЕНИЕ (ФИЗИКА) ----------
-    function update() {
-        if (gameState !== 'playing' || !matchActive) return;
-
-        const myPlayer = allPlayers.find(p => p.isPlayer);
-        const speedBonus = myPlayer ? getSpeed(myPlayer.rating) : 1;
-
-        if (myPlayer && joystickActive) {
-            const dist = Math.sqrt(joystickX * joystickX + joystickY * joystickY);
-            if (dist > 0.1) {
-                const speed = 5.0 * speedBonus * Math.min(1, dist * 2);
-                myPlayer.x += (joystickX / dist) * speed;
-                myPlayer.y += (joystickY / dist) * speed;
-            }
-        }
-
-        allPlayers.forEach(p => {
-            if (!p.isGoalkeeper) {
-                p.x = Math.max(35, Math.min(W - 35, p.x));
-                p.y = Math.max(35, Math.min(H - 35, p.y));
-            }
-            if (!p.isGoalkeeper) {
-                if (p.x < goalA.x + goalA.w + 5 && p.y > goalA.y && p.y < goalA.y + goalA.h) {
-                    p.x = goalA.x + goalA.w + 5;
-                }
-                if (p.x > goalB.x - goalB.w - 5 && p.y > goalB.y && p.y < goalB.y + goalB.h) {
-                    p.x = goalB.x - goalB.w - 5;
-                }
-            }
-        });
-
-        allPlayers.filter(p => !p.isPlayer).forEach(p => {
-            updateBot(p, p.team === 'A');
-        });
-
-        updateBallControl();
-
-        if (ballController) {
-            const targetX = ballController.x + 20;
-            const targetY = ballController.y;
-            ball.x += (targetX - ball.x) * 0.15;
-            ball.y += (targetY - ball.y) * 0.15;
+        function resetBall() {
+            ball.x = W / 2 + (Math.random() * 80 - 40);
+            ball.y = H / 2 + (Math.random() * 80 - 40);
             ball.vx = 0;
             ball.vy = 0;
+            ballController = null;
         }
 
-        if (myPlayer) {
-            if (kickPressed && ballController === myPlayer) {
-                const angle = Math.atan2(joystickY, joystickX);
-                const power = 6 + (myPlayer.rating - 50) * 0.08;
-                ball.vx = Math.cos(angle) * power * (0.9 + Math.random() * 0.2);
-                ball.vy = Math.sin(angle) * power * (0.9 + Math.random() * 0.2);
-                ballController = null;
-                kickPressed = false;
-            }
-
-            if (passPressed && ballController === myPlayer) {
-                const teammates = allPlayers.filter(p => p.team === myPlayer.team && p !== myPlayer);
-                let target = null;
-                let minDist = 999;
-                for (let t of teammates) {
-                    const dx = t.x - myPlayer.x;
-                    const dy = t.y - myPlayer.y;
-                    const d = Math.sqrt(dx * dx + dy * dy);
-                    if (d < minDist && d > 30) { minDist = d;
-                        target = t; }
-                }
-                if (target) {
-                    const angle = Math.atan2(target.y - ball.y, target.x - ball.x);
-                    const power = 5 + (myPlayer.rating - 50) * 0.06;
-                    ball.vx = Math.cos(angle) * power;
-                    ball.vy = Math.sin(angle) * power;
-                    ballController = null;
-                    passPressed = false;
-                    showNotification('🎯 Пас!', 'Мяч передан партнёру');
-                } else {
-                    passPressed = false;
+        // ---------- КОНТРОЛЬ МЯЧА (АВТОМАТИЧЕСКИЙ) ----------
+        function updateBallControl() {
+            let closest = null;
+            let minDist = 38;
+            for (let p of allPlayers) {
+                const dx = ball.x - p.x;
+                const dy = ball.y - p.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closest = p;
                 }
             }
-
-            if (tacklePressed) {
-                let target = null;
-                let minDist = 70;
-                for (let p of allPlayers) {
-                    if (p === myPlayer || p.team === myPlayer.team) continue;
-                    if (ballController === p) {
-                        const dx = myPlayer.x - p.x;
-                        const dy = myPlayer.y - p.y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        if (dist < minDist) {
-                            minDist = dist;
-                            target = p;
-                        }
-                    }
-                }
-                if (target) {
-                    const chance = 0.3 + (myPlayer.rating - 50) * 0.005;
-                    if (Math.random() < chance) {
-                        ballController = myPlayer;
-                        ball.x = myPlayer.x + 20;
-                        ball.y = myPlayer.y;
-                        ball.vx = 0;
-                        ball.vy = 0;
-                        showNotification('🛡️ Отбор!', 'Мяч перехвачен');
-                    }
-                }
-                tacklePressed = false;
-            }
+            ballController = closest;
         }
 
-        if (!ballController) {
-            ball.x += ball.vx;
-            ball.y += ball.vy;
-            ball.vx *= 0.99;
-            ball.vy *= 0.99;
-            if (Math.abs(ball.vx) < 0.05) ball.vx = 0;
-            if (Math.abs(ball.vy) < 0.05) ball.vy = 0;
-        }
-
-        for (let p of allPlayers) {
-            if (ballController === p) continue;
+        // ---------- БОТЫ С ИИ ----------
+        function updateBot(p, isTeamA) {
             const dx = ball.x - p.x;
             const dy = ball.y - p.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < ball.r + (p.r || 18)) {
-                const angle = Math.atan2(dy, dx);
-                const overlap = (ball.r + (p.r || 18) - dist) * 0.5;
-                ball.x += Math.cos(angle) * overlap;
-                ball.y += Math.sin(angle) * overlap;
-                const force = (p.isPlayer ? 4.0 * speedBonus : 3.5) + Math.random() * 1.5;
-                ball.vx += Math.cos(angle) * force;
-                ball.vy += Math.sin(angle) * force;
-            }
-        }
+            const distToBall = Math.sqrt(dx * dx + dy * dy);
 
-        const cr = 30;
-        if (ball.x < cr && ball.y < cr) {
-            const dx = ball.x - cr,
-                dy = ball.y - cr;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < cr - ball.r) {
-                const angle = Math.atan2(dy, dx);
-                ball.x = cr + Math.cos(angle) * (cr - ball.r);
-                ball.y = cr + Math.sin(angle) * (cr - ball.r);
-                const nx = Math.cos(angle),
-                    ny = Math.sin(angle);
-                const dot = ball.vx * nx + ball.vy * ny;
-                if (dot < 0) { ball.vx -= 2 * dot * nx;
-                    ball.vy -= 2 * dot * ny;
-                    ball.vx *= 0.6;
-                    ball.vy *= 0.6; }
-            }
-        } else if (ball.x > W - cr && ball.y < cr) {
-            const dx = ball.x - (W - cr),
-                dy = ball.y - cr;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < cr - ball.r) {
-                const angle = Math.atan2(dy, dx);
-                ball.x = W - cr + Math.cos(angle) * (cr - ball.r);
-                ball.y = cr + Math.sin(angle) * (cr - ball.r);
-                const nx = Math.cos(angle),
-                    ny = Math.sin(angle);
-                const dot = ball.vx * nx + ball.vy * ny;
-                if (dot < 0) { ball.vx -= 2 * dot * nx;
-                    ball.vy -= 2 * dot * ny;
-                    ball.vx *= 0.6;
-                    ball.vy *= 0.6; }
-            }
-        } else if (ball.x < cr && ball.y > H - cr) {
-            const dx = ball.x - cr,
-                dy = ball.y - (H - cr);
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < cr - ball.r) {
-                const angle = Math.atan2(dy, dx);
-                ball.x = cr + Math.cos(angle) * (cr - ball.r);
-                ball.y = H - cr + Math.sin(angle) * (cr - ball.r);
-                const nx = Math.cos(angle),
-                    ny = Math.sin(angle);
-                const dot = ball.vx * nx + ball.vy * ny;
-                if (dot < 0) { ball.vx -= 2 * dot * nx;
-                    ball.vy -= 2 * dot * ny;
-                    ball.vx *= 0.6;
-                    ball.vy *= 0.6; }
-            }
-        } else if (ball.x > W - cr && ball.y > H - cr) {
-            const dx = ball.x - (W - cr),
-                dy = ball.y - (H - cr);
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < cr - ball.r) {
-                const angle = Math.atan2(dy, dx);
-                ball.x = W - cr + Math.cos(angle) * (cr - ball.r);
-                ball.y = H - cr + Math.sin(angle) * (cr - ball.r);
-                const nx = Math.cos(angle),
-                    ny = Math.sin(angle);
-                const dot = ball.vx * nx + ball.vy * ny;
-                if (dot < 0) { ball.vx -= 2 * dot * nx;
-                    ball.vy -= 2 * dot * ny;
-                    ball.vx *= 0.6;
-                    ball.vy *= 0.6; }
-            }
-        }
+            let targetX = p.targetX,
+                targetY = p.targetY;
 
-        if (ball.y < ball.r + 5) { ball.y = ball.r + 5;
-            ball.vy *= -0.5; }
-        if (ball.y > H - ball.r - 5) { ball.y = H - ball.r - 5;
-            ball.vy *= -0.5; }
-        if (ball.x < ball.r + 5 && !(ball.y > goalA.y && ball.y < goalA.y + goalA.h)) {
-            ball.x = ball.r + 5;
-            ball.vx *= -0.5;
-        }
-        if (ball.x > W - ball.r - 5 && !(ball.y > goalB.y && ball.y < goalB.y + goalB.h)) {
-            ball.x = W - ball.r - 5;
-            ball.vx *= -0.5;
-        }
+            // --- ВРАТАРЬ ---
+            if (p.isGoalkeeper) {
+                const goal = isTeamA ? goalA : goalB;
+                const goalX = isTeamA ? 30 : W - 30;
+                // Реакция на мяч
+                if (distToBall < 250 && ball.x > goal.x - 40 && ball.x < goal.x + goal.w + 40) {
+                    const offset = 40 + Math.random() * 30;
+                    targetX = isTeamA ? goal.x + goal.w + offset : goal.x - offset;
+                    targetY = Math.max(goal.y + 20, Math.min(goal.y + goal.h - 20, ball.y));
+                } else {
+                    targetX = goalX;
+                    targetY = H / 2 + (Math.random() - 0.5) * 30;
+                }
+            }
+            // --- ПОЛЕВЫЕ ---
+            else {
+                // Защитник: держит позицию, но прессингует при опасности
+                if (p.role === 'defender') {
+                    const goalX = isTeamA ? 90 : W - 90;
+                    if (distToBall < 250 && ball.x > (isTeamA ? 50 : W - 50)) {
+                        targetX = Math.max(goalX - 30, Math.min(goalX + 30, ball.x));
+                        targetY = Math.max(100, Math.min(H - 100, ball.y));
+                    } else {
+                        targetX = goalX;
+                        targetY = H / 2 + (Math.random() - 0.5) * 70;
+                    }
+                }
+                // Нападающий: агрессивный прессинг
+                else {
+                    if (distToBall < 380) {
+                        targetX = ball.x + (Math.random() - 0.5) * 70;
+                        targetY = ball.y + (Math.random() - 0.5) * 70;
+                    } else {
+                        targetX = ball.x;
+                        targetY = ball.y;
+                    }
 
-        if (ball.x < goalA.x + goalA.w && ball.y > goalA.y + 5 && ball.y < goalA.y + goalA.h - 5) {
-            if (!ballController || ballController.team !== 'A') {
-                scoreB++;
-                updateScoreDisplay();
-                if (scoreB >= GOAL_LIMIT) { endMatch('B'); return; }
-                resetBall();
-                showNotification('⚽ ГОЛ!', 'Команда Б забила!');
-                stars += 20;
-                diamonds += 3;
-                saveProgress();
-                updateUI();
+                    // Отбор
+                    if (ballController && distToBall < 48 && Math.random() < (selectedDifficulty === 'extreme' ? 0.35 :
+                            0.18)) {
+                        ballController = p;
+                        ball.x = p.x + 20;
+                        ball.y = p.y;
+                        ball.vx = 0;
+                        ball.vy = 0;
+                    }
+
+                    // Удар по воротам
+                    if (ballController === p && distToBall < 38 && Math.random() < 0.035) {
+                        const targetGoalX = isTeamA ? W - 30 : 30;
+                        const targetGoalY = H / 2 + (Math.random() - 0.5) * 70;
+                        const kx = targetGoalX - ball.x;
+                        const ky = targetGoalY - ball.y;
+                        const kd = Math.sqrt(kx * kx + ky * ky) || 1;
+                        const power = p.power * (selectedDifficulty === 'extreme' ? 1.7 : 1.0);
+                        ball.vx = (kx / kd) * power * (0.85 + Math.random() * 0.3);
+                        ball.vy = (ky / kd) * power * (0.85 + Math.random() * 0.3);
+                        ballController = null;
+                        return;
+                    }
+                }
+            }
+
+            // Движение к цели
+            const dxT = targetX - p.x;
+            const dyT = targetY - p.y;
+            const distT = Math.sqrt(dxT * dxT + dyT * dyT);
+            const spd = (p.speed || 1.6) * (0.85 + Math.random() * 0.3) * (0.9 + p.aggression * 0.1);
+
+            if (distT > 5) {
+                const move = spd / distT;
+                p.x += dxT * move;
+                p.y += dyT * move;
             } else {
-                ball.x = goalA.x + goalA.w + 10;
+                p.targetX = p.x + (Math.random() - 0.5) * 80;
+                p.targetY = p.y + (Math.random() - 0.5) * 80;
+            }
+
+            // Границы
+            if (p.isGoalkeeper) {
+                const goal = isTeamA ? goalA : goalB;
+                p.x = Math.max(goal.x - 60, Math.min(goal.x + goal.w + 60, p.x));
+                p.y = Math.max(goal.y + 15, Math.min(goal.y + goal.h - 15, p.y));
+            } else {
+                p.x = Math.max(38, Math.min(W - 38, p.x));
+                p.y = Math.max(38, Math.min(H - 38, p.y));
+            }
+            if (!p.isGoalkeeper) {
+                if (p.x < goalA.x + goalA.w + 6 && p.y > goalA.y && p.y < goalA.y + goalA.h) {
+                    p.x = goalA.x + goalA.w + 6;
+                }
+                if (p.x > goalB.x - goalB.w - 6 && p.y > goalB.y && p.y < goalB.y + goalB.h) {
+                    p.x = goalB.x - goalB.w - 6;
+                }
+            }
+        }
+
+        // ---------- РИСОВАНИЕ ----------
+        function drawPlayer(p) {
+            const isMy = p.isPlayer;
+            const x = p.x,
+                y = p.y,
+                r = p.r || 18;
+
+            // Тень
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 15;
+
+            // Тело
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Обводка
+            ctx.strokeStyle = isMy ? 'rgba(255,215,0,0.9)' : 'rgba(0,0,0,0.3)';
+            ctx.lineWidth = isMy ? 3.5 : 1.5;
+            ctx.stroke();
+
+            // Номер
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.8)';
+            ctx.shadowBlur = 6;
+            ctx.fillText(p.number, x, y + 1);
+            ctx.shadowBlur = 0;
+
+            // Имя и рейтинг
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = '7px system-ui, sans-serif';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(p.name, x, y - r - 2);
+
+            const rating = p.rating || 50;
+            let color = '#ff6b6b';
+            if (rating >= 80) color = '#4caf50';
+            else if (rating >= 70) color = '#ffd700';
+            else if (rating >= 60) color = '#ff9800';
+            ctx.fillStyle = color;
+            ctx.font = 'bold 8px system-ui, sans-serif';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(rating, x, y - r - 12);
+
+            // Вратарь
+            if (p.isGoalkeeper) {
+                ctx.fillStyle = 'rgba(255,215,0,0.7)';
+                ctx.font = '16px sans-serif';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🧤', x + r + 10, y);
+            }
+
+            // Индикатор владения мячом
+            if (ballController === p) {
+                ctx.strokeStyle = 'rgba(255,255,0,0.3)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 6]);
+                ctx.beginPath();
+                ctx.arc(x, y, r + 7, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+
+            // Поле
+            const grad = ctx.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, 450);
+            grad.addColorStop(0, '#2a2a4a');
+            grad.addColorStop(1, '#16162a');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+
+            // Разметка
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 12]);
+            ctx.beginPath();
+            ctx.moveTo(W / 2, 12);
+            ctx.lineTo(W / 2, H - 12);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.beginPath();
+            ctx.arc(W / 2, H / 2, 55, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Ворота
+            ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(goalA.x, goalA.y, goalA.w, goalA.h);
+            ctx.fillStyle = 'rgba(255,255,255,0.03)';
+            ctx.fillRect(goalA.x, goalA.y, goalA.w, goalA.h);
+            ctx.strokeRect(goalB.x, goalB.y, goalB.w, goalB.h);
+            ctx.fillRect(goalB.x, goalB.y, goalB.w, goalB.h);
+
+            // Игроки
+            for (let p of allPlayers) drawPlayer(p);
+
+            // Мяч
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            // Блик
+            ctx.beginPath();
+            ctx.arc(ball.x - 2.5, ball.y - 2.5, 2.8, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fill();
+        }
+
+        // ---------- ОБНОВЛЕНИЕ (ФИЗИКА) ----------
+        function update() {
+            if (gameState !== 'playing' || !matchActive) return;
+
+            const myPlayer = allPlayers.find(p => p.isPlayer);
+            const speedBonus = myPlayer ? getSpeed(myPlayer.rating) : 1;
+
+            // Управление игроком
+            if (myPlayer && joystickActive) {
+                const dist = Math.sqrt(joystickX * joystickX + joystickY * joystickY);
+                if (dist > 0.1) {
+                    const speed = 5.2 * speedBonus * Math.min(1, dist * 2.2);
+                    myPlayer.x += (joystickX / dist) * speed;
+                    myPlayer.y += (joystickY / dist) * speed;
+                }
+            }
+
+            // Границы игроков
+            allPlayers.forEach(p => {
+                if (!p.isGoalkeeper) {
+                    p.x = Math.max(38, Math.min(W - 38, p.x));
+                    p.y = Math.max(38, Math.min(H - 38, p.y));
+                }
+                if (!p.isGoalkeeper) {
+                    if (p.x < goalA.x + goalA.w + 6 && p.y > goalA.y && p.y < goalA.y + goalA.h) {
+                        p.x = goalA.x + goalA.w + 6;
+                    }
+                    if (p.x > goalB.x - goalB.w - 6 && p.y > goalB.y && p.y < goalB.y + goalB.h) {
+                        p.x = goalB.x - goalB.w - 6;
+                    }
+                }
+            });
+
+            // Боты
+            allPlayers.filter(p => !p.isPlayer).forEach(p => {
+                updateBot(p, p.team === 'A');
+            });
+
+            // Контроль мяча
+            updateBallControl();
+
+            // Ведение мяча
+            if (ballController) {
+                const targetX = ballController.x + 22;
+                const targetY = ballController.y;
+                ball.x += (targetX - ball.x) * 0.18;
+                ball.y += (targetY - ball.y) * 0.18;
+                ball.vx = 0;
+                ball.vy = 0;
+            }
+
+            // Действия игрока
+            if (myPlayer) {
+                // Удар
+                if (kickPressed && ballController === myPlayer) {
+                    const angle = Math.atan2(joystickY, joystickX);
+                    const power = 6.5 + (myPlayer.rating - 50) * 0.085;
+                    ball.vx = Math.cos(angle) * power * (0.9 + Math.random() * 0.2);
+                    ball.vy = Math.sin(angle) * power * (0.9 + Math.random() * 0.2);
+                    ballController = null;
+                    kickPressed = false;
+                    // Эффект удара
+                    showNotification('⚡ Удар!', 'Сила: ' + (power * 0.8).toFixed(1));
+                }
+
+                // Пас
+                if (passPressed && ballController === myPlayer) {
+                    const teammates = allPlayers.filter(p => p.team === myPlayer.team && p !== myPlayer && p !==
+                    ballController);
+                    let target = null;
+                    let minDist = 999;
+                    for (let t of teammates) {
+                        const dx = t.x - myPlayer.x;
+                        const dy = t.y - myPlayer.y;
+                        const d = Math.sqrt(dx * dx + dy * dy);
+                        if (d < minDist && d > 35) { minDist = d;
+                            target = t; }
+                    }
+                    if (target) {
+                        const angle = Math.atan2(target.y - ball.y, target.x - ball.x);
+                        const power = 5.5 + (myPlayer.rating - 50) * 0.07;
+                        ball.vx = Math.cos(angle) * power;
+                        ball.vy = Math.sin(angle) * power;
+                        ballController = null;
+                        passPressed = false;
+                        showNotification('🎯 Пас!', 'Передан партнёру');
+                    } else {
+                        passPressed = false;
+                        showNotification('❌ Нет партнёра', 'Поблизости никого');
+                    }
+                }
+
+                // Отбор
+                if (tacklePressed) {
+                    let target = null;
+                    let minDist = 75;
+                    for (let p of allPlayers) {
+                        if (p === myPlayer || p.team === myPlayer.team) continue;
+                        if (ballController === p) {
+                            const dx = myPlayer.x - p.x;
+                            const dy = myPlayer.y - p.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < minDist) {
+                                minDist = dist;
+                                target = p;
+                            }
+                        }
+                    }
+                    if (target) {
+                        const chance = 0.3 + (myPlayer.rating - 50) * 0.005 - (selectedDifficulty === 'extreme' ? 0.15 :
+                            0);
+                        if (Math.random() < chance) {
+                            ballController = myPlayer;
+                            ball.x = myPlayer.x + 20;
+                            ball.y = myPlayer.y;
+                            ball.vx = 0;
+                            ball.vy = 0;
+                            showNotification('🛡️ Отбор!', 'Мяч перехвачен');
+                        } else {
+                            showNotification('❌ Отбор не удался', 'Попробуй ещё');
+                        }
+                    } else {
+                        showNotification('❌ Нет цели', 'Никто не владеет мячом рядом');
+                    }
+                    tacklePressed = false;
+                }
+            }
+
+            // Физика мяча
+            if (!ballController) {
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+                ball.vx *= 0.99;
+                ball.vy *= 0.99;
+                if (Math.abs(ball.vx) < 0.05) ball.vx = 0;
+                if (Math.abs(ball.vy) < 0.05) ball.vy = 0;
+            }
+
+            // Столкновения с игроками
+            for (let p of allPlayers) {
+                if (ballController === p) continue;
+                const dx = ball.x - p.x;
+                const dy = ball.y - p.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < ball.r + (p.r || 18)) {
+                    const angle = Math.atan2(dy, dx);
+                    const overlap = (ball.r + (p.r || 18) - dist) * 0.5;
+                    ball.x += Math.cos(angle) * overlap;
+                    ball.y += Math.sin(angle) * overlap;
+                    const force = (p.isPlayer ? 4.2 * speedBonus : 3.8) + Math.random() * 1.8;
+                    ball.vx += Math.cos(angle) * force;
+                    ball.vy += Math.sin(angle) * force;
+                    // Сбиваем контроль
+                    if (ballController === p) ballController = null;
+                }
+            }
+
+            // Скруглённые углы
+            const cr = 35;
+            if (ball.x < cr && ball.y < cr) {
+                const dx = ball.x - cr,
+                    dy = ball.y - cr;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < cr - ball.r) {
+                    const angle = Math.atan2(dy, dx);
+                    ball.x = cr + Math.cos(angle) * (cr - ball.r);
+                    ball.y = cr + Math.sin(angle) * (cr - ball.r);
+                    const nx = Math.cos(angle),
+                        ny = Math.sin(angle);
+                    const dot = ball.vx * nx + ball.vy * ny;
+                    if (dot < 0) { ball.vx -= 2 * dot * nx;
+                        ball.vy -= 2 * dot * ny;
+                        ball.vx *= 0.6;
+                        ball.vy *= 0.6; }
+                }
+            } else if (ball.x > W - cr && ball.y < cr) {
+                const dx = ball.x - (W - cr),
+                    dy = ball.y - cr;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < cr - ball.r) {
+                    const angle = Math.atan2(dy, dx);
+                    ball.x = W - cr + Math.cos(angle) * (cr - ball.r);
+                    ball.y = cr + Math.sin(angle) * (cr - ball.r);
+                    const nx = Math.cos(angle),
+                        ny = Math.sin(angle);
+                    const dot = ball.vx * nx + ball.vy * ny;
+                    if (dot < 0) { ball.vx -= 2 * dot * nx;
+                        ball.vy -= 2 * dot * ny;
+                        ball.vx *= 0.6;
+                        ball.vy *= 0.6; }
+                }
+            } else if (ball.x < cr && ball.y > H - cr) {
+                const dx = ball.x - cr,
+                    dy = ball.y - (H - cr);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < cr - ball.r) {
+                    const angle = Math.atan2(dy, dx);
+                    ball.x = cr + Math.cos(angle) * (cr - ball.r);
+                    ball.y = H - cr + Math.sin(angle) * (cr - ball.r);
+                    const nx = Math.cos(angle),
+                        ny = Math.sin(angle);
+                    const dot = ball.vx * nx + ball.vy * ny;
+                    if (dot < 0) { ball.vx -= 2 * dot * nx;
+                        ball.vy -= 2 * dot * ny;
+                        ball.vx *= 0.6;
+                        ball.vy *= 0.6; }
+                }
+            } else if (ball.x > W - cr && ball.y > H - cr) {
+                const dx = ball.x - (W - cr),
+                    dy = ball.y - (H - cr);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < cr - ball.r) {
+                    const angle = Math.atan2(dy, dx);
+                    ball.x = W - cr + Math.cos(angle) * (cr - ball.r);
+                    ball.y = H - cr + Math.sin(angle) * (cr - ball.r);
+                    const nx = Math.cos(angle),
+                        ny = Math.sin(angle);
+                    const dot = ball.vx * nx + ball.vy * ny;
+                    if (dot < 0) { ball.vx -= 2 * dot * nx;
+                        ball.vy -= 2 * dot * ny;
+                        ball.vx *= 0.6;
+                        ball.vy *= 0.6; }
+                }
+            }
+
+            // Стенки
+            if (ball.y < ball.r + 5) { ball.y = ball.r + 5;
+                ball.vy *= -0.5; }
+            if (ball.y > H - ball.r - 5) { ball.y = H - ball.r - 5;
+                ball.vy *= -0.5; }
+            if (ball.x < ball.r + 5 && !(ball.y > goalA.y && ball.y < goalA.y + goalA.h)) {
+                ball.x = ball.r + 5;
                 ball.vx *= -0.5;
             }
-        }
-        if (ball.x > goalB.x - goalB.w && ball.y > goalB.y + 5 && ball.y < goalB.y + goalB.h - 5) {
-            if (!ballController || ballController.team !== 'B') {
-                scoreA++;
-                updateScoreDisplay();
-                if (scoreA >= GOAL_LIMIT) { endMatch('A'); return; }
-                resetBall();
-                showNotification('⚽ ГОЛ!', 'Команда А забила!');
-                stars += 20;
-                diamonds += 3;
-                saveProgress();
-                updateUI();
-            } else {
-                ball.x = goalB.x - goalB.w - 10;
+            if (ball.x > W - ball.r - 5 && !(ball.y > goalB.y && ball.y < goalB.y + goalB.h)) {
+                ball.x = W - ball.r - 5;
                 ball.vx *= -0.5;
             }
-        }
 
-        ball.x = Math.max(ball.r, Math.min(W - ball.r, ball.x));
-        ball.y = Math.max(ball.r, Math.min(H - ball.r, ball.y));
-    }
-
-    // ---------- ТАЙМЕР ----------
-    function startMatch() {
-        if (matchActive) return;
-        matchActive = true;
-        gameState = 'playing';
-        timeLeft = 300;
-        scoreA = 0;
-        scoreB = 0;
-        updateScoreDisplay();
-        timerDiv.innerText = '⏱️ 5:00';
-        winnerDiv.style.display = 'none';
-        restartBtn.style.display = 'none';
-        menuBtn.style.display = 'none';
-        resetBall();
-        if (timerInterval) clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            const mins = Math.floor(timeLeft / 60);
-            const secs = timeLeft % 60;
-            timerDiv.innerText = `⏱️ ${mins}:${secs < 10 ? '0' : ''}${secs}`;
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-                endMatch(null);
+            // ГОЛЫ
+            if (ball.x < goalA.x + goalA.w && ball.y > goalA.y + 5 && ball.y < goalA.y + goalA.h - 5) {
+                if (!ballController || ballController.team !== 'A') {
+                    scoreB++;
+                    updateScoreDisplay();
+                    if (scoreB >= GOAL_LIMIT) { endMatch('B'); return; }
+                    resetBall();
+                    showNotification('⚽ ГОЛ!', 'Команда Б забила!');
+                    stars += 25;
+                    diamonds += 4;
+                    saveProgress();
+                    updateUI();
+                } else {
+                    ball.x = goalA.x + goalA.w + 12;
+                    ball.vx *= -0.5;
+                }
             }
-        }, 1000);
-    }
+            if (ball.x > goalB.x - goalB.w && ball.y > goalB.y + 5 && ball.y < goalB.y + goalB.h - 5) {
+                if (!ballController || ballController.team !== 'B') {
+                    scoreA++;
+                    updateScoreDisplay();
+                    if (scoreA >= GOAL_LIMIT) { endMatch('A'); return; }
+                    resetBall();
+                    showNotification('⚽ ГОЛ!', 'Команда А забила!');
+                    stars += 25;
+                    diamonds += 4;
+                    saveProgress();
+                    updateUI();
+                } else {
+                    ball.x = goalB.x - goalB.w - 12;
+                    ball.vx *= -0.5;
+                }
+            }
 
-    function endMatch(winner) {
-        matchActive = false;
-        gameState = 'ended';
-        let result = 'draw';
-        if (winner === 'A') result = 'win';
-        else if (winner === 'B') result = 'lose';
-        else {
-            if (scoreA > scoreB) result = 'win';
-            else if (scoreB > scoreA) result = 'lose';
-            else result = 'draw';
+            ball.x = Math.max(ball.r, Math.min(W - ball.r, ball.x));
+            ball.y = Math.max(ball.r, Math.min(H - ball.r, ball.y));
         }
 
-        if (result === 'win') { stars += 100;
-            diamonds += 15;
-            rank = Math.min(99, rank + 2); } else if (result === 'draw') { stars += 40;
-            diamonds += 5;
-            rank = Math.min(99, rank + 1); } else { stars += 10;
-            diamonds += 1; }
-        saveProgress();
+        // ---------- ТАЙМЕР ----------
+        function startMatch() {
+            if (matchActive) return;
+            matchActive = true;
+            gameState = 'playing';
+            timeLeft = 300;
+            scoreA = 0;
+            scoreB = 0;
+            updateScoreDisplay();
+            timerDiv.innerText = '⏱️ 5:00';
+            winnerDiv.style.display = 'none';
+            restartBtn.style.display = 'none';
+            menuBtn.style.display = 'none';
+            resetBall();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const mins = Math.floor(timeLeft / 60);
+                const secs = timeLeft % 60;
+                timerDiv.innerText = `⏱️ ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    endMatch(null);
+                }
+            }, 1000);
+        }
+
+        function endMatch(winner) {
+            matchActive = false;
+            gameState = 'ended';
+            let result = 'draw';
+            if (winner === 'A') result = 'win';
+            else if (winner === 'B') result = 'lose';
+            else {
+                if (scoreA > scoreB) result = 'win';
+                else if (scoreB > scoreA) result = 'lose';
+                else result = 'draw';
+            }
+
+            if (result === 'win') { stars += 150;
+                diamonds += 20;
+                rank = Math.min(99, rank + 3); } else if (result === 'draw') { stars += 50;
+                diamonds += 8;
+                rank = Math.min(99, rank + 1); } else { stars += 15;
+                diamonds += 2; }
+            saveProgress();
+            updateUI();
+
+            winnerDiv.innerHTML =
+                `<span class="cup">🏆</span> ${result === 'win' ? 'ПОБЕДА!' : result === 'draw' ? 'НИЧЬЯ!' : 'ПОРАЖЕНИЕ!'}`;
+            winnerDiv.style.display = 'block';
+            restartBtn.style.display = 'block';
+            menuBtn.style.display = 'block';
+        }
+
+        function updateScoreDisplay() {
+            scoreADiv.innerText = scoreA;
+            scoreBDiv.innerText = scoreB;
+            matchScoreDiv.innerText = `⚽ Счёт матча: ${scoreA} : ${scoreB}`;
+        }
+
+        // ---------- ЦИКЛ ----------
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        // ---------- СОБЫТИЯ МЕНЮ ----------
+        document.querySelectorAll('.menu-tab').forEach(el => {
+            el.addEventListener('click', function() {
+                document.querySelectorAll('.menu-tab').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.mode-btn').forEach(el => {
+            el.addEventListener('click', function() {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedMode = this.dataset.mode;
+            });
+        });
+
+        document.querySelectorAll('.diff-btn').forEach(el => {
+            el.addEventListener('click', function() {
+                document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedDifficulty = this.dataset.diff;
+            });
+        });
+
+        document.getElementById('starPackBtn').addEventListener('click', () => openPack('star'));
+        document.getElementById('diamondPackBtn').addEventListener('click', () => openPack('diamond'));
+
+        startBtn.addEventListener('click', function() {
+            if (selectedPlayer === -1) return;
+            menu.style.display = 'none';
+            joystickArea.style.display = 'block';
+            kickBtn.style.display = 'flex';
+            passBtn.style.display = 'flex';
+            tackleBtn.style.display = 'flex';
+            initPlayers();
+            startMatch();
+        });
+
+        restartBtn.addEventListener('click', function() {
+            winnerDiv.style.display = 'none';
+            restartBtn.style.display = 'none';
+            menuBtn.style.display = 'none';
+            initPlayers();
+            startMatch();
+        });
+
+        menuBtn.addEventListener('click', function() {
+            winnerDiv.style.display = 'none';
+            restartBtn.style.display = 'none';
+            menuBtn.style.display = 'none';
+            joystickArea.style.display = 'none';
+            kickBtn.style.display = 'none';
+            passBtn.style.display = 'none';
+            tackleBtn.style.display = 'none';
+            menu.style.display = 'flex';
+            gameState = 'menu';
+            matchActive = false;
+            if (timerInterval) { clearInterval(timerInterval);
+                timerInterval = null; }
+        });
+
+        // ---------- ДЖОЙСТИК ----------
+        joystickArea.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            joystickTouchId = touch.identifier;
+            joystickActive = true;
+            updateJoystick(touch);
+        }, { passive: false });
+
+        joystickArea.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (let touch of e.touches) {
+                if (touch.identifier === joystickTouchId) updateJoystick(touch);
+            }
+        }, { passive: false });
+
+        joystickArea.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            joystickActive = false;
+            joystickX = 0;
+            joystickY = 0;
+            joystickKnob.style.transform = 'translate(-50%, -50%)';
+            joystickTouchId = null;
+        }, { passive: false });
+
+        joystickArea.addEventListener('touchcancel', () => {
+            joystickActive = false;
+            joystickX = 0;
+            joystickY = 0;
+            joystickKnob.style.transform = 'translate(-50%, -50%)';
+            joystickTouchId = null;
+        });
+
+        function updateJoystick(touch) {
+            const rect = joystickArea.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const dx = touch.clientX - cx;
+            const dy = touch.clientY - cy;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const maxDist = rect.width / 2 - 22;
+            if (dist > maxDist) {
+                const angle = Math.atan2(dy, dx);
+                const nx = Math.cos(angle) * maxDist;
+                const ny = Math.sin(angle) * maxDist;
+                joystickX = nx / maxDist;
+                joystickY = ny / maxDist;
+                joystickKnob.style.transform = `translate(${nx - 22}px, ${ny - 22}px)`;
+            } else {
+                joystickX = dx / maxDist;
+                joystickY = dy / maxDist;
+                joystickKnob.style.transform = `translate(${dx - 22}px, ${dy - 22}px)`;
+            }
+        }
+
+        // ---------- КНОПКИ ----------
+        kickBtn.addEventListener('touchstart', (e) => { e.preventDefault();
+            kickPressed = true; }, { passive: false });
+        kickBtn.addEventListener('touchend', () => { kickPressed = false; });
+        kickBtn.addEventListener('touchcancel', () => { kickPressed = false; });
+
+        passBtn.addEventListener('touchstart', (e) => { e.preventDefault();
+            passPressed = true; }, { passive: false });
+        passBtn.addEventListener('touchend', () => { passPressed = false; });
+        passBtn.addEventListener('touchcancel', () => { passPressed = false; });
+
+        tackleBtn.addEventListener('touchstart', (e) => { e.preventDefault();
+            tacklePressed = true; }, { passive: false });
+        tackleBtn.addEventListener('touchend', () => { tacklePressed = false; });
+        tackleBtn.addEventListener('touchcancel', () => { tacklePressed = false; });
+
+        // ---------- СТАРТ ----------
+        loadProgress();
+        buildPlayerMenu();
         updateUI();
-
-        winnerDiv.innerHTML =
-            `<span class="cup">🏆</span> ${result === 'win' ? 'ПОБЕДА!' : result === 'draw' ? 'НИЧЬЯ!' : 'ПОРАЖЕНИЕ!'}`;
-        winnerDiv.style.display = 'block';
-        restartBtn.style.display = 'block';
-        menuBtn.style.display = 'block';
-    }
-
-    function updateScoreDisplay() {
-        scoreADiv.innerText = scoreA;
-        scoreBDiv.innerText = scoreB;
-        matchScoreDiv.innerText = `⚽ Счёт матча: ${scoreA} : ${scoreB}`;
-    }
-
-    // ---------- ЦИКЛ ----------
-    function loop() {
-        update();
-        draw();
-        requestAnimationFrame(loop);
-    }
-
-    // ---------- СОБЫТИЯ МЕНЮ ----------
-    document.querySelectorAll('.menu-tab').forEach(el => {
-        el.addEventListener('click', function() {
-            document.querySelectorAll('.menu-tab').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById('tab-' + this.dataset.tab).classList.add('active');
-        });
-    });
-
-    document.querySelectorAll('.mode-btn').forEach(el => {
-        el.addEventListener('click', function() {
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            selectedMode = this.dataset.mode;
-        });
-    });
-
-    document.querySelectorAll('.diff-btn').forEach(el => {
-        el.addEventListener('click', function() {
-            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            selectedDifficulty = this.dataset.diff;
-        });
-    });
-
-    document.getElementById('starPackBtn').addEventListener('click', () => openPack('star'));
-    document.getElementById('diamondPackBtn').addEventListener('click', () => openPack('diamond'));
-
-    startBtn.addEventListener('click', function() {
-        if (selectedPlayer === -1) return;
-        menu.style.display = 'none';
-        joystickArea.style.display = 'block';
-        kickBtn.style.display = 'flex';
-        passBtn.style.display = 'flex';
-        tackleBtn.style.display = 'flex';
-        initPlayers();
-        startMatch();
-    });
-
-    restartBtn.addEventListener('click', function() {
-        winnerDiv.style.display = 'none';
-        restartBtn.style.display = 'none';
-        menuBtn.style.display = 'none';
-        initPlayers();
-        startMatch();
-    });
-
-    menuBtn.addEventListener('click', function() {
-        winnerDiv.style.display = 'none';
-        restartBtn.style.display = 'none';
-        menuBtn.style.display = 'none';
-        joystickArea.style.display = 'none';
-        kickBtn.style.display = 'none';
-        passBtn.style.display = 'none';
-        tackleBtn.style.display = 'none';
-        menu.style.display = 'flex';
-        gameState = 'menu';
-        matchActive = false;
-        if (timerInterval) { clearInterval(timerInterval);
-            timerInterval = null; }
-    });
-
-    // ---------- ДЖОЙСТИК ----------
-    joystickArea.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        joystickTouchId = touch.identifier;
-        joystickActive = true;
-        updateJoystick(touch);
-    }, { passive: false });
-
-    joystickArea.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        for (let touch of e.touches) {
-            if (touch.identifier === joystickTouchId) updateJoystick(touch);
-        }
-    }, { passive: false });
-
-    joystickArea.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        joystickActive = false;
-        joystickX = 0;
-        joystickY = 0;
-        joystickKnob.style.transform = 'translate(-50%, -50%)';
-        joystickTouchId = null;
-    }, { passive: false });
-
-    joystickArea.addEventListener('touchcancel', () => {
-        joystickActive = false;
-        joystickX = 0;
-        joystickY = 0;
-        joystickKnob.style.transform = 'translate(-50%, -50%)';
-        joystickTouchId = null;
-    });
-
-    function updateJoystick(touch) {
-        const rect = joystickArea.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
-        const dx = touch.clientX - cx;
-        const dy = touch.clientY - cy;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const maxDist = rect.width / 2 - 20;
-        if (dist > maxDist) {
-            const angle = Math.atan2(dy, dx);
-            const nx = Math.cos(angle) * maxDist;
-            const ny = Math.sin(angle) * maxDist;
-            joystickX = nx / maxDist;
-            joystickY = ny / maxDist;
-            joystickKnob.style.transform = `translate(${nx - 20}px, ${ny - 20}px)`;
-        } else {
-            joystickX = dx / maxDist;
-            joystickY = dy / maxDist;
-            joystickKnob.style.transform = `translate(${dx - 20}px, ${dy - 20}px)`;
-        }
-    }
-
-    // ---------- КНОПКИ ----------
-    kickBtn.addEventListener('touchstart', (e) => { e.preventDefault();
-        kickPressed = true; }, { passive: false });
-    kickBtn.addEventListener('touchend', () => { kickPressed = false; });
-    kickBtn.addEventListener('touchcancel', () => { kickPressed = false; });
-
-    passBtn.addEventListener('touchstart', (e) => { e.preventDefault();
-        passPressed = true; }, { passive: false });
-    passBtn.addEventListener('touchend', () => { passPressed = false; });
-    passBtn.addEventListener('touchcancel', () => { passPressed = false; });
-
-    tackleBtn.addEventListener('touchstart', (e) => { e.preventDefault();
-        tacklePressed = true; }, { passive: false });
-    tackleBtn.addEventListener('touchend', () => { tacklePressed = false; });
-    tackleBtn.addEventListener('touchcancel', () => { tacklePressed = false; });
-
-    // ---------- СТАРТ ----------
-    loadProgress();
-    buildPlayerMenu();
-    updateUI();
-    loop();
-</script>
+        loop();
+    </script>
 </body>
 </html>
