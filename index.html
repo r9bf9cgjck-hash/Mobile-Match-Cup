@@ -73,37 +73,6 @@
         }
         .tab-btn.active { border-color: #ffd700; background: rgba(255,215,0,0.2); }
         .tab-btn:active { transform: scale(0.94); }
-        #divisionInfo {
-            background: rgba(0,0,0,0.3);
-            border-radius: 16px;
-            padding: 10px 16px;
-            margin: 8px 0;
-            width: 100%;
-            max-width: 340px;
-            text-align: center;
-            font-size: 0.9rem;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        #divisionInfo .stars { color: #ffd700; }
-        #divisionInfo .diamonds { color: #00e5ff; }
-        #divisionInfo .rating { color: #4caf50; }
-        .pack-btn {
-            background: rgba(255,215,0,0.15);
-            border: 2px solid rgba(255,215,0,0.3);
-            border-radius: 30px;
-            padding: 6px 16px;
-            color: #fff;
-            font-size: 0.7rem;
-            cursor: pointer;
-            transition: 0.2s;
-            margin: 4px;
-        }
-        .pack-btn:active { transform: scale(0.94); background: rgba(255,215,0,0.3); }
-        .pack-btn.diamond {
-            background: rgba(0,229,255,0.15);
-            border-color: rgba(0,229,255,0.3);
-        }
-        .pack-btn.diamond:active { background: rgba(0,229,255,0.3); }
         .mode-select {
             display: flex;
             gap: 16px;
@@ -361,6 +330,37 @@
             transition: 0.2s;
         }
         #resetBtn:active { transform: scale(0.92); background: rgba(255,0,0,0.4); }
+        #divisionInfo {
+            background: rgba(0,0,0,0.3);
+            border-radius: 16px;
+            padding: 10px 16px;
+            margin: 8px 0;
+            width: 100%;
+            max-width: 340px;
+            text-align: center;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #divisionInfo .stars { color: #ffd700; }
+        #divisionInfo .diamonds { color: #00e5ff; }
+        #divisionInfo .rating { color: #4caf50; }
+        .pack-btn {
+            background: rgba(255,215,0,0.15);
+            border: 2px solid rgba(255,215,0,0.3);
+            border-radius: 30px;
+            padding: 6px 16px;
+            color: #fff;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.2s;
+            margin: 4px;
+        }
+        .pack-btn:active { transform: scale(0.94); background: rgba(255,215,0,0.3); }
+        .pack-btn.diamond {
+            background: rgba(0,229,255,0.15);
+            border-color: rgba(0,229,255,0.3);
+        }
+        .pack-btn.diamond:active { background: rgba(0,229,255,0.3); }
         .notification {
             position: absolute;
             top: 50%;
@@ -464,7 +464,7 @@
 
 <script>
     // ============================================================
-    //  MATCH CUP — ФИНАЛ (ЗВЁЗДЫ/АЛМАЗЫ ВСЮДУ, ПАКИ ТОЛЬКО В DIVISION)
+    //  MATCH CUP — ПОЛНАЯ ВЕРСИЯ С НОВОЙ ФИЗИКОЙ
     // ============================================================
 
     const canvas = document.getElementById('gameCanvas');
@@ -519,10 +519,10 @@
     let kickPressed = false;
     let tacklePressed = false;
 
-    // --- ИГРОКИ ---
+    // --- ИГРОКИ И ФИЗИКА ---
     let allPlayers = [];
     let ball = { x: W/2, y: H/2, r: 10, vx: 0, vy: 0 };
-    let ballOwner = null;
+    let ballController = null; // игрок, который контролирует мяч
 
     // --- ВОРОТА ---
     const GOAL_H = 75;
@@ -531,12 +531,12 @@
 
     // --- ДАННЫЕ ИГРОКОВ ---
     const PLAYER_DB = {
-        0: { id: 0, name: 'Хабиб', number: '7', color: '#d32f2f', rating: 72, role: 'attacker' },
-        1: { id: 1, name: 'Азиз', number: '10', color: '#e57373', rating: 72, role: 'defender' },
-        2: { id: 2, name: 'Шамиль Рб', number: '4', color: '#1976d2', rating: 69, role: 'attacker' },
-        3: { id: 3, name: 'Шамиль Jr', number: '8', color: '#64b5f6', rating: 67, role: 'defender' },
-        4: { id: 4, name: 'Салаудин', number: '11', color: '#42a5f5', rating: 67, role: 'attacker' },
-        5: { id: 5, name: 'Абдул', number: '5', color: '#f06292', rating: 65, role: 'defender' }
+        0: { id: 0, name: 'Хабиб', number: '7', color: '#d32f2f', rating: 72, role: 'attacker', team: 'A' },
+        1: { id: 1, name: 'Азиз', number: '10', color: '#e57373', rating: 72, role: 'defender', team: 'A' },
+        5: { id: 5, name: 'Абдул', number: '5', color: '#f06292', rating: 65, role: 'defender', team: 'A' },
+        2: { id: 2, name: 'Шамиль Рб', number: '4', color: '#1976d2', rating: 69, role: 'attacker', team: 'B' },
+        3: { id: 3, name: 'Шамиль Jr', number: '8', color: '#64b5f6', rating: 67, role: 'defender', team: 'B' },
+        4: { id: 4, name: 'Салаудин', number: '11', color: '#42a5f5', rating: 67, role: 'attacker', team: 'B' }
     };
 
     // --- КАРЬЕРА ---
@@ -561,7 +561,7 @@
     let division = loadDivision();
     function saveDivision() { localStorage.setItem('matchcup_division', JSON.stringify(division)); }
 
-    // --- ОБНОВЛЕНИЕ ВАЛЮТ В БАР ---
+    // --- ОБНОВЛЕНИЕ ВАЛЮТ ---
     function updateCurrencyBar() {
         barStars.innerText = division.stars;
         barDiamonds.innerText = division.diamonds;
@@ -668,7 +668,6 @@
 
     // --- ИНИЦИАЛИЗАЦИЯ ИГРОКОВ ---
     function initPlayers() {
-        const ids = [0, 1, 2, 3, 4, 5];
         const teamA_ids = [0, 1, 5];
         const teamB_ids = [2, 3, 4];
 
@@ -677,74 +676,42 @@
 
         if (selectedTab === 'division') {
             const myId = selectedPlayer;
-            const botId = (myId === 0 || myId === 1 || myId === 5) ? 1 : 0;
             const myRating = getPlayerRating(myId, 'division');
-            const botRating = getPlayerRating(botId, 'division');
-            const myData = { ...PLAYER_DB[myId], rating: myRating, isPlayer: true, team: 'A', isGoalkeeper: false, speed: getPlayerSpeedFromRating(myRating) * 1.6, power: getPlayerPowerFromRating(myRating) * 1.4, role: 'attacker' };
-            const botData = { ...PLAYER_DB[botId], rating: botRating, isPlayer: false, team: 'A', isGoalkeeper: false, speed: getPlayerSpeedFromRating(botRating) * 1.6, power: getPlayerPowerFromRating(botRating) * 1.4, role: 'defender' };
-            teamA_data = [myData, botData];
-            const enemyIds = [2, 3, 4];
-            enemyIds.forEach(id => {
-                const p = PLAYER_DB[id];
-                const rating = p.rating;
-                teamB_data.push({
-                    ...p,
-                    rating: rating,
-                    isPlayer: false,
-                    team: 'B',
-                    isGoalkeeper: false,
-                    speed: getPlayerSpeedFromRating(rating) * 1.6,
-                    power: getPlayerPowerFromRating(rating) * 1.4,
-                    role: 'attacker'
+            const teamIds = PLAYER_DB[myId].team === 'A' ? teamA_ids : teamB_ids;
+            const teammateId = teamIds.find(id => id !== myId);
+            const teammateRating = getPlayerRating(teammateId, 'division');
+            const myData = { ...PLAYER_DB[myId], rating: myRating, isPlayer: true, team: PLAYER_DB[myId].team, isGoalkeeper: false, speed: getPlayerSpeedFromRating(myRating) * 1.6, power: getPlayerPowerFromRating(myRating) * 1.4 };
+            const botData = { ...PLAYER_DB[teammateId], rating: teammateRating, isPlayer: false, team: PLAYER_DB[teammateId].team, isGoalkeeper: false, speed: getPlayerSpeedFromRating(teammateRating) * 1.6, power: getPlayerPowerFromRating(teammateRating) * 1.4 };
+            
+            if (PLAYER_DB[myId].team === 'A') {
+                teamA_data = [myData, botData];
+                teamB_data = teamB_ids.map(id => {
+                    const p = PLAYER_DB[id];
+                    const rating = p.rating;
+                    return { ...p, rating, isPlayer: false, team: 'B', isGoalkeeper: false, speed: getPlayerSpeedFromRating(rating) * 1.6, power: getPlayerPowerFromRating(rating) * 1.4 };
                 });
-            });
-            if (teamB_data.length > 0) {
-                teamB_data[0].isGoalkeeper = true;
-                teamB_data[0].x = W-55;
-                teamB_data[0].y = H/2;
-            }
-            if (teamA_data.length > 0) {
-                teamA_data[0].isGoalkeeper = true;
-                teamA_data[0].x = 55;
-                teamA_data[0].y = H/2;
-            }
-            const myPlayer = teamA_data.find(p => p.isPlayer);
-            if (myPlayer && myPlayer.isGoalkeeper) {
-                myPlayer.isGoalkeeper = false;
-                myPlayer.x = 180;
-                myPlayer.y = H/2;
+            } else {
+                teamB_data = [myData, botData];
+                teamA_data = teamA_ids.map(id => {
+                    const p = PLAYER_DB[id];
+                    const rating = p.rating;
+                    return { ...p, rating, isPlayer: false, team: 'A', isGoalkeeper: false, speed: getPlayerSpeedFromRating(rating) * 1.6, power: getPlayerPowerFromRating(rating) * 1.4 };
+                });
             }
         } else {
             teamA_ids.forEach(id => {
                 const p = PLAYER_DB[id];
                 const rating = getPlayerRating(id, selectedTab);
-                teamA_data.push({
-                    ...p,
-                    isPlayer: p.id === selectedPlayer,
-                    team: 'A',
-                    isGoalkeeper: false,
-                    speed: getPlayerSpeedFromRating(rating) * 1.6,
-                    power: getPlayerPowerFromRating(rating) * 1.4,
-                    rating: rating,
-                    role: p.role
-                });
+                teamA_data.push({ ...p, rating, isPlayer: p.id === selectedPlayer, team: 'A', isGoalkeeper: false, speed: getPlayerSpeedFromRating(rating) * 1.6, power: getPlayerPowerFromRating(rating) * 1.4 });
             });
             teamB_ids.forEach(id => {
                 const p = PLAYER_DB[id];
                 const rating = getPlayerRating(id, selectedTab);
-                teamB_data.push({
-                    ...p,
-                    isPlayer: p.id === selectedPlayer,
-                    team: 'B',
-                    isGoalkeeper: false,
-                    speed: getPlayerSpeedFromRating(rating) * 1.6,
-                    power: getPlayerPowerFromRating(rating) * 1.4,
-                    rating: rating,
-                    role: p.role
-                });
+                teamB_data.push({ ...p, rating, isPlayer: p.id === selectedPlayer, team: 'B', isGoalkeeper: false, speed: getPlayerSpeedFromRating(rating) * 1.6, power: getPlayerPowerFromRating(rating) * 1.4 });
             });
         }
 
+        // Расстановка позиций
         if (selectedMode === '3v3' && selectedTab !== 'division') {
             teamA_data.forEach(p => {
                 if (p.isGoalkeeper) { p.x = 55; p.y = H/2; }
@@ -775,18 +742,20 @@
                     p.y = H/2 + (i === 0 ? -60 : 60);
                 }
             });
-            if (teamA_data.length > 0) {
-                const gkA = teamA_data[0];
-                gkA.isGoalkeeper = true;
-                gkA.x = 55;
-                gkA.y = H/2;
-            }
-            if (teamB_data.length > 0) {
-                const gkB = teamB_data[0];
-                gkB.isGoalkeeper = true;
-                gkB.x = W-55;
-                gkB.y = H/2;
-            }
+        }
+
+        // Вратари
+        if (teamA_data.length > 0) {
+            const gkA = teamA_data[0];
+            gkA.isGoalkeeper = true;
+            gkA.x = 55;
+            gkA.y = H/2;
+        }
+        if (teamB_data.length > 0) {
+            const gkB = teamB_data[0];
+            gkB.isGoalkeeper = true;
+            gkB.x = W-55;
+            gkB.y = H/2;
         }
 
         const myPlayer = [...teamA_data, ...teamB_data].find(p => p.isPlayer);
@@ -803,7 +772,7 @@
             p.targetY = p.y + (Math.random()-0.5)*60;
             p.r = 20;
         });
-        ballOwner = null;
+        ballController = null;
         resetBall();
     }
 
@@ -812,30 +781,28 @@
         ball.y = H/2 + (Math.random()*80-40);
         ball.vx = 0;
         ball.vy = 0;
-        ballOwner = null;
+        ballController = null;
     }
 
     // --- ОТБОР ---
     function performTackle(player) {
-        if (!player) return;
+        if (!player || ballController !== player) return false;
         let target = null;
         let minDist = 80;
         for (let p of allPlayers) {
             if (p === player || p.team === player.team) continue;
-            if (p === ballOwner) {
-                const dx = player.x - p.x;
-                const dy = player.y - p.y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < minDist) {
-                    minDist = dist;
-                    target = p;
-                }
+            const dx = player.x - p.x;
+            const dy = player.y - p.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < minDist) {
+                minDist = dist;
+                target = p;
             }
         }
         if (target) {
-            const chance = 0.25 + (getPlayerRating(selectedPlayer, selectedTab) - 50) * 0.005;
+            const chance = 0.3 + (getPlayerRating(selectedPlayer, selectedTab) - 50) * 0.005;
             if (Math.random() < chance) {
-                ballOwner = player;
+                ballController = player;
                 ball.x = player.x + 25;
                 ball.y = player.y;
                 ball.vx = 0;
@@ -846,7 +813,7 @@
         return false;
     }
 
-    // --- БОТЫ (НЕ БЬЮТ В СВОИ ВОРОТА) ---
+    // --- БОТЫ ---
     function updateBot(p, isTeamA) {
         const dx = ball.x - p.x;
         const dy = ball.y - p.y;
@@ -883,24 +850,27 @@
                     targetX = ball.x;
                     targetY = ball.y;
                 }
-                if (ballOwner && distToBall < 45 && Math.random() < 0.3) {
-                    ballOwner = p;
+
+                // Отбор
+                if (ballController && distToBall < 45 && Math.random() < 0.25) {
+                    ballController = p;
                     ball.x = p.x + 25;
                     ball.y = p.y;
                     ball.vx = 0;
                     ball.vy = 0;
                 }
-                // Удар ТОЛЬКО по воротам соперника
-                if (p === ballOwner && distToBall < 40 && Math.random() < 0.04) {
-                    const targetGoalX = isTeamA ? W-40 : 20;
-                    const targetGoalY = H/2 + (Math.random()-0.5)*60;
+
+                // Удар по чужим воротам
+                if (ballController === p && distToBall < 40 && Math.random() < 0.04) {
+                    const targetGoalX = isTeamA ? W - 40 : 20;
+                    const targetGoalY = H/2 + (Math.random() - 0.5) * 60;
                     const kx = targetGoalX - ball.x;
                     const ky = targetGoalY - ball.y;
                     const kd = Math.sqrt(kx*kx + ky*ky) || 1;
                     const power = p.power * (selectedDifficulty === 'extreme' ? 1.5 : 1.0);
                     ball.vx = (kx / kd) * power;
                     ball.vy = (ky / kd) * power;
-                    ballOwner = null;
+                    ballController = null;
                     return;
                 }
             }
@@ -990,7 +960,7 @@
             ctx.fillText(roleLabel, x, y + r + 14);
         }
         
-        if (p === ballOwner) {
+        if (ballController === p) {
             ctx.strokeStyle = 'rgba(255,255,0,0.5)';
             ctx.lineWidth = 2;
             ctx.setLineDash([3, 5]);
@@ -1105,13 +1075,14 @@
         ctx.fill();
     }
 
-    // --- ОБНОВЛЕНИЕ ---
+    // --- ОБНОВЛЕНИЕ (НОВАЯ ФИЗИКА) ---
     function update() {
         if (gameState !== 'playing' || !matchActive) return;
 
         const myPlayer = allPlayers.find(p => p.isPlayer === true);
         const speedBonus = myPlayer ? getPlayerSpeedFromRating(myPlayer.rating) : 1;
 
+        // --- УПРАВЛЕНИЕ ИГРОКОМ ---
         if (myPlayer && joystickActive) {
             const jx = joystickX, jy = joystickY;
             const dist = Math.sqrt(jx*jx + jy*jy);
@@ -1122,6 +1093,7 @@
             }
         }
 
+        // --- ГРАНИЦЫ ---
         allPlayers.forEach(p => {
             if (!p.isGoalkeeper) {
                 p.x = Math.max(35, Math.min(W-35, p.x));
@@ -1137,34 +1109,47 @@
             }
         });
 
-        if (ballOwner) {
-            const targetX = ballOwner.x + 25;
-            const targetY = ballOwner.y;
-            ball.x += (targetX - ball.x) * 0.25;
-            ball.y += (targetY - ball.y) * 0.25;
-            ball.vx = 0;
-            ball.vy = 0;
-        }
-
+        // --- БОТЫ ---
         allPlayers.filter(p => !p.isPlayer).forEach(p => {
             updateBot(p, p.team === 'A');
         });
 
-        if (myPlayer && kickPressed && ballOwner === myPlayer) {
+        // --- АВТОМАТИЧЕСКИЙ КОНТРОЛЬ МЯЧА ---
+        let closestPlayer = null;
+        let closestDist = 40;
+        for (let p of allPlayers) {
+            const dx = ball.x - p.x;
+            const dy = ball.y - p.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestPlayer = p;
+            }
+        }
+        ballController = closestPlayer;
+
+        // --- ВЕДЕНИЕ МЯЧА ---
+        if (ballController) {
+            const targetX = ballController.x + 25;
+            const targetY = ballController.y;
+            ball.x += (targetX - ball.x) * 0.2;
+            ball.y += (targetY - ball.y) * 0.2;
+            ball.vx = 0;
+            ball.vy = 0;
+        }
+
+        // --- УДАР ---
+        if (myPlayer && kickPressed && ballController === myPlayer) {
             const angle = Math.atan2(joystickY, joystickX);
             const power = 7 + (myPlayer.rating - 50) * 0.12;
             ball.vx = Math.cos(angle) * power * (0.9 + Math.random() * 0.2);
             ball.vy = Math.sin(angle) * power * (0.9 + Math.random() * 0.2);
-            ballOwner = null;
+            ballController = null;
             kickPressed = false;
         }
 
-        if (myPlayer && tacklePressed) {
-            performTackle(myPlayer);
-            tacklePressed = false;
-        }
-
-        if (!ballOwner) {
+        // --- ФИЗИКА МЯЧА ---
+        if (!ballController) {
             ball.x += ball.vx;
             ball.y += ball.vy;
             ball.vx *= 0.99;
@@ -1173,8 +1158,9 @@
             if (Math.abs(ball.vy) < 0.1) ball.vy = 0;
         }
 
+        // --- СТОЛКНОВЕНИЯ МЯЧА С ИГРОКАМИ ---
         for (let p of allPlayers) {
-            if (p === ballOwner) continue;
+            if (ballController === p) continue;
             const dx = ball.x - p.x;
             const dy = ball.y - p.y;
             const dist = Math.sqrt(dx*dx + dy*dy);
@@ -1186,14 +1172,12 @@
                 const force = (p.isPlayer ? 4.0 * speedBonus : 3.5) + Math.random()*2;
                 ball.vx += Math.cos(angle) * force;
                 ball.vy += Math.sin(angle) * force;
-                if (!ballOwner && Math.random() < 0.25) {
-                    ballOwner = p;
-                    ball.vx *= 0.3;
-                    ball.vy *= 0.3;
-                }
+                // Сбиваем контроль, если мяч отлетел
+                if (ballController === p) ballController = null;
             }
         }
 
+        // --- СКРУГЛЁННЫЕ УГЛЫ ---
         const cr = 35;
         if (ball.x < cr && ball.y < cr) {
             const dx = ball.x - cr, dy = ball.y - cr;
@@ -1241,6 +1225,7 @@
             }
         }
 
+        // --- СТЕНКИ ---
         if (ball.y < ball.r + 5) { ball.y = ball.r + 5; ball.vy *= -0.6; }
         if (ball.y > H - ball.r - 5) { ball.y = H - ball.r - 5; ball.vy *= -0.6; }
         if (ball.x < ball.r + 5 && !(ball.y > goalA.y && ball.y < goalA.y + goalA.h)) {
@@ -1250,8 +1235,13 @@
             ball.x = W - ball.r - 5; ball.vx *= -0.6;
         }
 
+        // --- ГОЛЫ ---
         if (ball.x < goalA.x + goalA.w && ball.y > goalA.y + 5 && ball.y < goalA.y + goalA.h - 5) {
-            if (!ballOwner || ballOwner.team !== 'A') {
+            if (ballController && ballController.team === 'A') {
+                // Не даём забить в свои ворота
+                ball.x = goalA.x + goalA.w + 10;
+                ball.vx *= -0.5;
+            } else {
                 scoreB++;
                 updateScoreDisplay();
                 if (scoreB >= GOAL_LIMIT) { endMatch('B'); return; }
@@ -1259,7 +1249,10 @@
             }
         }
         if (ball.x > goalB.x - goalB.w && ball.y > goalB.y + 5 && ball.y < goalB.y + goalB.h - 5) {
-            if (!ballOwner || ballOwner.team !== 'B') {
+            if (ballController && ballController.team === 'B') {
+                ball.x = goalB.x - goalB.w - 10;
+                ball.vx *= -0.5;
+            } else {
                 scoreA++;
                 updateScoreDisplay();
                 if (scoreA >= GOAL_LIMIT) { endMatch('A'); return; }
@@ -1311,6 +1304,7 @@
             else { result = 'draw'; }
         }
 
+        // Division
         if (selectedTab === 'division') {
             let starsGain = 20;
             let diamondsGain = 0;
@@ -1326,6 +1320,7 @@
             }
         }
 
+        // Карьера
         if (selectedTab === 'career' && selectedPlayer >= 0) {
             const myPlayer = allPlayers.find(p => p.isPlayer);
             if (myPlayer) {
