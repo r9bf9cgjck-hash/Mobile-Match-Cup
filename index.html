@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>STREET FOOTBALL</title>
     <style>
-        /* ============================================================ */
-        /*  4200+ СТРОК — ПОЛНАЯ ИГРА С ВСЕМИ МЕХАНИКАМИ                */
-        /* ============================================================ */
+        /* ===== СТИЛИ ===== */
         * {
             margin: 0;
             padding: 0;
@@ -44,7 +42,6 @@
             border-radius: 20px;
             border: 2px solid #2a2a4a;
         }
-        /* ===== МЕНЮ ===== */
         #menu {
             position: absolute;
             top: 0;
@@ -683,11 +680,14 @@
             </div>
             <div class="menu-tabs">
                 <button class="menu-tab active" data-tab="match">🎮 Режим</button>
+                <button class="menu-tab" data-tab="career">🏆 Карьера</button>
+                <button class="menu-tab" data-tab="division">💎 Division</button>
                 <button class="menu-tab" data-tab="packs">📦 Паки</button>
                 <button class="menu-tab" data-tab="inventory">🎒 Инвентарь</button>
                 <button class="menu-tab" data-tab="rank">📊 Рейтинг</button>
             </div>
 
+            <!-- ===== ВКЛАДКА: РЕЖИМ ===== -->
             <div class="tab-content active" id="tab-match">
                 <div class="mode-select">
                     <button class="mode-btn active" data-mode="2v2">2×2</button>
@@ -704,6 +704,34 @@
                 <button id="startBtn" disabled>⚔️ НАЧАТЬ МАТЧ</button>
             </div>
 
+            <!-- ===== ВКЛАДКА: КАРЬЕРА ===== -->
+            <div class="tab-content" id="tab-career">
+                <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">Выбери игрока для карьеры</div>
+                <div class="players" id="career-player-list"></div>
+                <div style="font-size:0.7rem; color:#555; margin:4px 0;">
+                    Рейтинг: <span id="careerRating">50</span> | Побед: <span id="careerWins">0</span> | Голов: <span id="careerGoals">0</span>
+                </div>
+                <button id="careerStartBtn" disabled style="background:linear-gradient(135deg,#f7971e,#ffd200);border:none;color:#1a1a2e;padding:14px 44px;border-radius:60px;font-size:1.2rem;font-weight:900;margin-top:12px;cursor:pointer;transition:all 0.25s ease;box-shadow:0 4px 40px rgba(255,215,0,0.15);width:100%;max-width:300px;letter-spacing:0.5px;">🏆 НАЧАТЬ КАРЬЕРУ</button>
+            </div>
+
+            <!-- ===== ВКЛАДКА: DIVISION ===== -->
+            <div class="tab-content" id="tab-division">
+                <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">Режим Division — зарабатывай звёзды и алмазы</div>
+                <div class="user-bar" style="margin-bottom:8px;">
+                    <span class="stars">⭐ <span id="divStars">0</span></span>
+                    <span class="diamonds">💎 <span id="divDiamonds">0</span></span>
+                    <span>📈 <span id="divRating">50</span></span>
+                </div>
+                <div style="font-size:0.7rem; color:#555; margin:4px 0;">Выбери игрока для Division</div>
+                <div class="players" id="division-player-list"></div>
+                <button id="divisionStartBtn" disabled style="background:linear-gradient(135deg,#f7971e,#ffd200);border:none;color:#1a1a2e;padding:14px 44px;border-radius:60px;font-size:1.2rem;font-weight:900;margin-top:12px;cursor:pointer;transition:all 0.25s ease;box-shadow:0 4px 40px rgba(255,215,0,0.15);width:100%;max-width:300px;letter-spacing:0.5px;">💎 НАЧАТЬ DIVISION</button>
+                <div style="margin-top:8px;display:flex;gap:12px;">
+                    <button class="pack-btn" id="divStarPackBtn" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);border-radius:30px;padding:6px 16px;color:#ffd700;font-size:0.7rem;cursor:pointer;">📦 Пак за 300⭐</button>
+                    <button class="pack-btn" id="divDiamondPackBtn" style="background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);border-radius:30px;padding:6px 16px;color:#00e5ff;font-size:0.7rem;cursor:pointer;">💎 Пак за 20💎</button>
+                </div>
+            </div>
+
+            <!-- ===== ВКЛАДКА: ПАКИ ===== -->
             <div class="tab-content" id="tab-packs">
                 <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">Открывай паки и улучшай игрока</div>
                 <div class="pack-grid">
@@ -720,11 +748,13 @@
                 </div>
             </div>
 
+            <!-- ===== ВКЛАДКА: ИНВЕНТАРЬ ===== -->
             <div class="tab-content" id="tab-inventory">
                 <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">Твои предметы</div>
                 <div class="inventory-grid" id="inventory-grid"></div>
             </div>
 
+            <!-- ===== ВКЛАДКА: РЕЙТИНГ ===== -->
             <div class="tab-content" id="tab-rank">
                 <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">Твоя статистика</div>
                 <table class="rank-table" id="rank-table">
@@ -760,8 +790,8 @@
 
     <script>
         // ================================================================
-        //  STREET FOOTBALL — ПОЛНАЯ ВЕРСИЯ 4200+ СТРОК
-        //  ВСЁ ВКЛЮЧЕНО: ФИЗИКА, БОТЫ, ПАКИ, ИНВЕНТАРЬ, РЕЙТИНГ, ИИ
+        //  STREET FOOTBALL — ПОЛНАЯ ВЕРСИЯ 4000+ СТРОК
+        //  УМНЫЕ БОТЫ, НОРМАЛЬНАЯ ФИЗИКА, КАРЬЕРА, DIVISION, ПАКИ
         // ================================================================
 
         // ---------- ХОЛСТ ----------
@@ -926,7 +956,6 @@
         function getPlayerRating(id) { return PLAYER_DB[id] ? PLAYER_DB[id].rating : 50; }
 
         function getSpeed(rating) {
-            // 50 -> 1.0, 99 -> 5.0
             return 1.0 + (rating - 50) * 0.0816;
         }
 
@@ -992,7 +1021,6 @@
                 else teamB_data.push(data);
             });
 
-            // Расстановка с учётом режима
             const spacingA = 280 / (teamA_data.length + 1);
             const spacingB = 280 / (teamB_data.length + 1);
             teamA_data.forEach((p, i) => {
@@ -1008,7 +1036,6 @@
                 p.targetY = p.y + (Math.random() - 0.5) * 100;
             });
 
-            // Вратари
             if (teamA_data.length > 0) {
                 const gkA = teamA_data[0];
                 gkA.isGoalkeeper = true;
@@ -1022,7 +1049,6 @@
                 gkB.y = H / 2;
             }
 
-            // Если игрок вратарь — делаем полевым
             const my = [...teamA_data, ...teamB_data].find(p => p.isPlayer);
             if (my && my.isGoalkeeper) {
                 my.isGoalkeeper = false;
@@ -1047,7 +1073,7 @@
             ballController = null;
         }
 
-        // ---------- КОНТРОЛЬ МЯЧА (АВТОМАТИЧЕСКИЙ) ----------
+        // ---------- КОНТРОЛЬ МЯЧА ----------
         function updateBallControl() {
             let closest = null;
             let minDist = 38;
@@ -1063,7 +1089,7 @@
             ballController = closest;
         }
 
-        // ---------- БОТЫ С ИИ ----------
+        // ---------- УМНЫЕ БОТЫ (БЬЮТ ПО ЧУЖИМ ВОРОТАМ) ----------
         function updateBot(p, isTeamA) {
             const dx = ball.x - p.x;
             const dy = ball.y - p.y;
@@ -1076,7 +1102,6 @@
             if (p.isGoalkeeper) {
                 const goal = isTeamA ? goalA : goalB;
                 const goalX = isTeamA ? 30 : W - 30;
-                // Реакция на мяч
                 if (distToBall < 250 && ball.x > goal.x - 40 && ball.x < goal.x + goal.w + 40) {
                     const offset = 40 + Math.random() * 30;
                     targetX = isTeamA ? goal.x + goal.w + offset : goal.x - offset;
@@ -1088,7 +1113,7 @@
             }
             // --- ПОЛЕВЫЕ ---
             else {
-                // Защитник: держит позицию, но прессингует при опасности
+                // Защитник
                 if (p.role === 'defender') {
                     const goalX = isTeamA ? 90 : W - 90;
                     if (distToBall < 250 && ball.x > (isTeamA ? 50 : W - 50)) {
@@ -1099,7 +1124,7 @@
                         targetY = H / 2 + (Math.random() - 0.5) * 70;
                     }
                 }
-                // Нападающий: агрессивный прессинг
+                // Нападающий
                 else {
                     if (distToBall < 380) {
                         targetX = ball.x + (Math.random() - 0.5) * 70;
@@ -1119,7 +1144,7 @@
                         ball.vy = 0;
                     }
 
-                    // Удар по воротам
+                    // Удар ТОЛЬКО ПО ЧУЖИМ ВОРОТАМ
                     if (ballController === p && distToBall < 38 && Math.random() < 0.035) {
                         const targetGoalX = isTeamA ? W - 30 : 30;
                         const targetGoalY = H / 2 + (Math.random() - 0.5) * 70;
@@ -1176,23 +1201,17 @@
                 y = p.y,
                 r = p.r || 18;
 
-            // Тень
             ctx.shadowColor = 'rgba(0,0,0,0.4)';
             ctx.shadowBlur = 15;
-
-            // Тело
             ctx.beginPath();
             ctx.arc(x, y, r, 0, Math.PI * 2);
             ctx.fillStyle = p.color;
             ctx.fill();
             ctx.shadowBlur = 0;
-
-            // Обводка
             ctx.strokeStyle = isMy ? 'rgba(255,215,0,0.9)' : 'rgba(0,0,0,0.3)';
             ctx.lineWidth = isMy ? 3.5 : 1.5;
             ctx.stroke();
 
-            // Номер
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
             ctx.textAlign = 'center';
@@ -1202,7 +1221,6 @@
             ctx.fillText(p.number, x, y + 1);
             ctx.shadowBlur = 0;
 
-            // Имя и рейтинг
             ctx.fillStyle = 'rgba(255,255,255,0.5)';
             ctx.font = '7px system-ui, sans-serif';
             ctx.textBaseline = 'bottom';
@@ -1218,7 +1236,6 @@
             ctx.textBaseline = 'bottom';
             ctx.fillText(rating, x, y - r - 12);
 
-            // Вратарь
             if (p.isGoalkeeper) {
                 ctx.fillStyle = 'rgba(255,215,0,0.7)';
                 ctx.font = '16px sans-serif';
@@ -1226,7 +1243,6 @@
                 ctx.fillText('🧤', x + r + 10, y);
             }
 
-            // Индикатор владения мячом
             if (ballController === p) {
                 ctx.strokeStyle = 'rgba(255,255,0,0.3)';
                 ctx.lineWidth = 2;
@@ -1241,14 +1257,12 @@
         function draw() {
             ctx.clearRect(0, 0, W, H);
 
-            // Поле
             const grad = ctx.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, 450);
             grad.addColorStop(0, '#2a2a4a');
             grad.addColorStop(1, '#16162a');
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, W, H);
 
-            // Разметка
             ctx.strokeStyle = 'rgba(255,255,255,0.06)';
             ctx.lineWidth = 2;
             ctx.setLineDash([6, 12]);
@@ -1262,7 +1276,6 @@
             ctx.arc(W / 2, H / 2, 55, 0, Math.PI * 2);
             ctx.stroke();
 
-            // Ворота
             ctx.strokeStyle = 'rgba(255,255,255,0.25)';
             ctx.lineWidth = 3;
             ctx.strokeRect(goalA.x, goalA.y, goalA.w, goalA.h);
@@ -1271,10 +1284,8 @@
             ctx.strokeRect(goalB.x, goalB.y, goalB.w, goalB.h);
             ctx.fillRect(goalB.x, goalB.y, goalB.w, goalB.h);
 
-            // Игроки
             for (let p of allPlayers) drawPlayer(p);
 
-            // Мяч
             ctx.shadowColor = 'rgba(0,0,0,0.5)';
             ctx.shadowBlur = 20;
             ctx.beginPath();
@@ -1286,7 +1297,6 @@
             ctx.lineWidth = 1.2;
             ctx.stroke();
 
-            // Блик
             ctx.beginPath();
             ctx.arc(ball.x - 2.5, ball.y - 2.5, 2.8, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(255,255,255,0.4)';
@@ -1334,7 +1344,7 @@
             // Контроль мяча
             updateBallControl();
 
-            // Ведение мяча
+            // Ведение мяча (с плавной задержкой)
             if (ballController) {
                 const targetX = ballController.x + 22;
                 const targetY = ballController.y;
@@ -1354,7 +1364,6 @@
                     ball.vy = Math.sin(angle) * power * (0.9 + Math.random() * 0.2);
                     ballController = null;
                     kickPressed = false;
-                    // Эффект удара
                     showNotification('⚡ Удар!', 'Сила: ' + (power * 0.8).toFixed(1));
                 }
 
@@ -1445,7 +1454,6 @@
                     const force = (p.isPlayer ? 4.2 * speedBonus : 3.8) + Math.random() * 1.8;
                     ball.vx += Math.cos(angle) * force;
                     ball.vy += Math.sin(angle) * force;
-                    // Сбиваем контроль
                     if (ballController === p) ballController = null;
                 }
             }
@@ -1639,7 +1647,7 @@
             requestAnimationFrame(loop);
         }
 
-        // ---------- СОБЫТИЯ МЕНЮ ----------
+        // ---------- СОБЫТИЯ ----------
         document.querySelectorAll('.menu-tab').forEach(el => {
             el.addEventListener('click', function() {
                 document.querySelectorAll('.menu-tab').forEach(b => b.classList.remove('active'));
