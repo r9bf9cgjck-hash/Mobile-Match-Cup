@@ -55,22 +55,55 @@
         }
         .tab-select {
             display: flex;
-            gap: 12px;
+            gap: 8px;
             margin: 10px 0;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         .tab-btn {
             background: rgba(255,255,255,0.1);
             border: 2px solid rgba(255,255,255,0.2);
             border-radius: 16px;
-            padding: 8px 20px;
+            padding: 6px 14px;
             color: #fff;
-            font-size: 1rem;
+            font-size: 0.8rem;
             font-weight: bold;
             cursor: pointer;
             transition: 0.2s;
         }
         .tab-btn.active { border-color: #ffd700; background: rgba(255,215,0,0.2); }
         .tab-btn:active { transform: scale(0.94); }
+        #divisionInfo {
+            background: rgba(0,0,0,0.3);
+            border-radius: 16px;
+            padding: 10px 16px;
+            margin: 8px 0;
+            width: 100%;
+            max-width: 340px;
+            text-align: center;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #divisionInfo .stars { color: #ffd700; }
+        #divisionInfo .diamonds { color: #00e5ff; }
+        #divisionInfo .rating { color: #4caf50; }
+        .pack-btn {
+            background: rgba(255,215,0,0.15);
+            border: 2px solid rgba(255,215,0,0.3);
+            border-radius: 30px;
+            padding: 6px 16px;
+            color: #fff;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.2s;
+            margin: 4px;
+        }
+        .pack-btn:active { transform: scale(0.94); background: rgba(255,215,0,0.3); }
+        .pack-btn.diamond {
+            background: rgba(0,229,255,0.15);
+            border-color: rgba(0,229,255,0.3);
+        }
+        .pack-btn.diamond:active { background: rgba(0,229,255,0.3); }
         .mode-select {
             display: flex;
             gap: 16px;
@@ -328,6 +361,23 @@
             transition: 0.2s;
         }
         #resetBtn:active { transform: scale(0.92); background: rgba(255,0,0,0.4); }
+        .notification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.85);
+            color: #ffd700;
+            padding: 20px 30px;
+            border-radius: 16px;
+            border: 2px solid #ffd700;
+            z-index: 50;
+            display: none;
+            text-align: center;
+            font-size: 1.2rem;
+            max-width: 80%;
+        }
+        .notification .sub { font-size: 0.9rem; color: #aaa; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -338,8 +388,9 @@
         <button id="resetBtn">🗑️ Сброс</button>
         <h1>⚽ MATCH CUP</h1>
         <div class="tab-select">
-            <button class="tab-btn active" data-tab="quick">⚡ Быстрый матч</button>
+            <button class="tab-btn active" data-tab="quick">⚡ Быстрый</button>
             <button class="tab-btn" data-tab="career">🏆 Карьера</button>
+            <button class="tab-btn" data-tab="division">💎 Division</button>
         </div>
         <div id="tabContent">
             <div class="sub" style="margin-top:4px;">Выбери режим:</div>
@@ -355,6 +406,13 @@
                 <button class="diff-btn" data-diff="medium" disabled>🟡 Средний</button>
                 <button class="diff-btn" data-diff="hard" disabled>🔴 Сложный</button>
                 <button class="diff-btn" data-diff="extreme" disabled>🔥 Хардкор</button>
+            </div>
+            <div id="divisionInfo" style="display:none;">
+                <div>⭐ <span id="divStars">0</span> | 💎 <span id="divDiamonds">0</span> | 📈 <span id="divRating">50</span></div>
+                <div style="margin-top:6px;">
+                    <button class="pack-btn" id="starPackBtn">📦 Пак за 300⭐</button>
+                    <button class="pack-btn diamond" id="diamondPackBtn">💎 Пак за 20💎</button>
+                </div>
             </div>
             <button id="startBtn" disabled>▶️ НАЧАТЬ МАТЧ</button>
         </div>
@@ -375,9 +433,14 @@
     <div id="tackle-btn">⚔️<br>Отбор</div>
 </div>
 
+<div id="notification" class="notification">
+    <div id="notifText">🎉</div>
+    <div class="sub" id="notifSub"></div>
+</div>
+
 <script>
     // ============================================================
-    //  MATCH CUP — 99-БАЛЬНЫЙ РЕЙТИНГ + КАРЬЕРА
+    //  MATCH CUP — БЫСТРЫЙ + КАРЬЕРА + DIVISION (С АЛМАЗАМИ)
     // ============================================================
 
     const canvas = document.getElementById('gameCanvas');
@@ -400,6 +463,13 @@
     const kickBtn = document.getElementById('kick-btn');
     const tackleBtn = document.getElementById('tackle-btn');
     const resetBtn = document.getElementById('resetBtn');
+    const divisionInfo = document.getElementById('divisionInfo');
+    const divStarsSpan = document.getElementById('divStars');
+    const divDiamondsSpan = document.getElementById('divDiamonds');
+    const divRatingSpan = document.getElementById('divRating');
+    const notifDiv = document.getElementById('notification');
+    const notifText = document.getElementById('notifText');
+    const notifSub = document.getElementById('notifSub');
 
     // --- СОСТОЯНИЕ ---
     let selectedPlayer = -1;
@@ -433,7 +503,7 @@
     const goalA = { x: 25, y: H/2 - GOAL_H/2, w: 18, h: GOAL_H };
     const goalB = { x: W-43, y: H/2 - GOAL_H/2, w: 18, h: GOAL_H };
 
-    // --- ДАННЫЕ ИГРОКОВ (НОВЫЕ РЕЙТИНГИ) ---
+    // --- ДАННЫЕ ИГРОКОВ ---
     const PLAYER_DB = {
         0: { id: 0, name: 'Хабиб', number: '7', color: '#d32f2f', rating: 72, role: 'attacker' },
         1: { id: 1, name: 'Азиз', number: '10', color: '#e57373', rating: 72, role: 'defender' },
@@ -443,44 +513,91 @@
         5: { id: 5, name: 'Абдул', number: '5', color: '#f06292', rating: 65, role: 'defender' }
     };
 
-    // --- КАРЬЕРНЫЕ ДАННЫЕ ---
+    // --- КАРЬЕРА ---
     function loadCareer() {
         try {
             const data = localStorage.getItem('matchcup_career');
             if (data) return JSON.parse(data);
         } catch(e) {}
-        return {
-            playerId: null,
-            rating: 50,
-            wins: 0,
-            goals: 0,
-            achievements: []
-        };
+        return { playerId: null, rating: 50, wins: 0, goals: 0, achievements: [] };
     }
     let career = loadCareer();
+    function saveCareer() { localStorage.setItem('matchcup_career', JSON.stringify(career)); }
 
-    function saveCareer() {
-        localStorage.setItem('matchcup_career', JSON.stringify(career));
+    // --- DIVISION ---
+    function loadDivision() {
+        try {
+            const data = localStorage.getItem('matchcup_division');
+            if (data) return JSON.parse(data);
+        } catch(e) {}
+        return { stars: 0, diamonds: 0, packsOpened: 0, playerId: null, rating: 50 };
     }
+    let division = loadDivision();
+    function saveDivision() { localStorage.setItem('matchcup_division', JSON.stringify(division)); }
 
-    function getPlayerRating(playerId) {
-        if (selectedTab === 'quick') {
+    // --- ПОЛУЧИТЬ РЕЙТИНГ ---
+    function getPlayerRating(playerId, mode) {
+        if (mode === 'quick') {
             return PLAYER_DB[playerId] ? PLAYER_DB[playerId].rating : 50;
-        } else {
-            if (career.playerId === playerId) {
-                return career.rating;
-            }
+        } else if (mode === 'career') {
+            if (career.playerId === playerId) return career.rating;
+            return PLAYER_DB[playerId] ? PLAYER_DB[playerId].rating : 50;
+        } else if (mode === 'division') {
+            if (division.playerId === playerId) return division.rating;
             return PLAYER_DB[playerId] ? PLAYER_DB[playerId].rating : 50;
         }
+        return 50;
     }
 
     function getPlayerSpeedFromRating(rating) {
-        // 50 -> 1.0 (медленный), 99 -> 5.5 (очень быстрый)
-        return 1.0 + (rating - 50) * 0.09;
+        return 1.0 + (rating - 50) * 0.12;
     }
 
     function getPlayerPowerFromRating(rating) {
         return 2.0 + (rating - 50) * 0.07;
+    }
+
+    // --- УВЕДОМЛЕНИЯ ---
+    function showNotification(text, sub = '') {
+        notifText.innerText = text;
+        notifSub.innerText = sub;
+        notifDiv.style.display = 'block';
+        setTimeout(() => { notifDiv.style.display = 'none'; }, 3000);
+    }
+
+    // --- ПАКИ ---
+    function openStarPack() {
+        const packsAvailable = Math.floor(division.stars / 300) - division.packsOpened;
+        if (packsAvailable <= 0) {
+            showNotification('❌ Нет доступных паков', 'Нужно 300⭐');
+            return;
+        }
+        const gain = 1 + Math.floor(Math.random() * 5);
+        division.rating = Math.min(99, division.rating + gain);
+        division.packsOpened++;
+        saveDivision();
+        updateDivisionUI();
+        showNotification('🎉 Пак открыт!', `Рейтинг +${gain} (${division.rating - gain} → ${division.rating})`);
+    }
+
+    function openDiamondPack() {
+        if (division.diamonds < 20) {
+            showNotification('❌ Недостаточно алмазов', 'Нужно 20💎');
+            return;
+        }
+        const gain = 2 + Math.floor(Math.random() * 5);
+        division.rating = Math.min(99, division.rating + gain);
+        division.diamonds -= 20;
+        saveDivision();
+        updateDivisionUI();
+        showNotification('💎 Алмазный пак!', `Рейтинг +${gain} (${division.rating - gain} → ${division.rating})`);
+    }
+
+    // --- ОБНОВЛЕНИЕ DIVISION UI ---
+    function updateDivisionUI() {
+        divStarsSpan.innerText = division.stars;
+        divDiamondsSpan.innerText = division.diamonds;
+        divRatingSpan.innerText = division.rating;
     }
 
     // --- ПОСТРОЕНИЕ МЕНЮ ---
@@ -490,7 +607,7 @@
         const ids = [0, 1, 2, 3, 4, 5];
         ids.forEach(id => {
             const p = PLAYER_DB[id];
-            const rating = getPlayerRating(id);
+            const rating = getPlayerRating(id, selectedTab);
             const card = document.createElement('div');
             card.className = 'player-card';
             card.dataset.player = p.id;
@@ -505,6 +622,13 @@
                 selectedPlayer = parseInt(this.dataset.player);
                 startBtn.disabled = false;
                 document.querySelectorAll('.diff-btn').forEach(b => b.disabled = false);
+                // Если Division — устанавливаем игрока
+                if (selectedTab === 'division') {
+                    division.playerId = selectedPlayer;
+                    if (division.rating < 50) division.rating = PLAYER_DB[selectedPlayer].rating;
+                    saveDivision();
+                    updateDivisionUI();
+                }
             });
             list.appendChild(card);
         });
@@ -513,16 +637,62 @@
     // --- ИНИЦИАЛИЗАЦИЯ ИГРОКОВ ---
     function initPlayers() {
         const ids = [0, 1, 2, 3, 4, 5];
-        const teamA_ids = [0, 1, 5]; // Хабиб, Азиз, Абдул
-        const teamB_ids = [2, 3, 4]; // Шамиль Рб, Шамиль Jr, Салаудин
+        const teamA_ids = [0, 1, 5];
+        const teamB_ids = [2, 3, 4];
 
         let teamA_data = [];
         let teamB_data = [];
 
-        if (selectedMode === '2v2') {
+        if (selectedTab === 'division') {
+            // Division: 1 игрок (ты) + 1 бот против 3 ботов
+            const myId = selectedPlayer;
+            const botId = (myId === 0 || myId === 1 || myId === 5) ? 1 : 0;
+            const myRating = getPlayerRating(myId, 'division');
+            const botRating = getPlayerRating(botId, 'division');
+            // Твоя команда (А): ты + бот
+            const myData = { ...PLAYER_DB[myId], rating: myRating, isPlayer: true, team: 'A', isGoalkeeper: false, speed: getPlayerSpeedFromRating(myRating) * 1.6, power: getPlayerPowerFromRating(myRating) * 1.4, role: 'attacker' };
+            const botData = { ...PLAYER_DB[botId], rating: botRating, isPlayer: false, team: 'A', isGoalkeeper: false, speed: getPlayerSpeedFromRating(botRating) * 1.6, power: getPlayerPowerFromRating(botRating) * 1.4, role: 'defender' };
+            teamA_data = [myData, botData];
+            // Команда Б: 3 бота
+            const enemyIds = [2, 3, 4];
+            enemyIds.forEach(id => {
+                const p = PLAYER_DB[id];
+                const rating = p.rating;
+                teamB_data.push({
+                    ...p,
+                    rating: rating,
+                    isPlayer: false,
+                    team: 'B',
+                    isGoalkeeper: false,
+                    speed: getPlayerSpeedFromRating(rating) * 1.6,
+                    power: getPlayerPowerFromRating(rating) * 1.4,
+                    role: 'attacker'
+                });
+            });
+            // Вратарь в команде Б
+            if (teamB_data.length > 0) {
+                teamB_data[0].isGoalkeeper = true;
+                teamB_data[0].x = W-55;
+                teamB_data[0].y = H/2;
+            }
+            // Вратарь в команде А
+            if (teamA_data.length > 0) {
+                teamA_data[0].isGoalkeeper = true;
+                teamA_data[0].x = 55;
+                teamA_data[0].y = H/2;
+            }
+            // Если игрок вратарь — делаем полевым
+            const myPlayer = teamA_data.find(p => p.isPlayer);
+            if (myPlayer && myPlayer.isGoalkeeper) {
+                myPlayer.isGoalkeeper = false;
+                myPlayer.x = 180;
+                myPlayer.y = H/2;
+            }
+        } else {
+            // Обычный режим 2v2 или 3v3
             teamA_ids.forEach(id => {
                 const p = PLAYER_DB[id];
-                const rating = getPlayerRating(id);
+                const rating = getPlayerRating(id, selectedTab);
                 teamA_data.push({
                     ...p,
                     isPlayer: p.id === selectedPlayer,
@@ -536,7 +706,7 @@
             });
             teamB_ids.forEach(id => {
                 const p = PLAYER_DB[id];
-                const rating = getPlayerRating(id);
+                const rating = getPlayerRating(id, selectedTab);
                 teamB_data.push({
                     ...p,
                     isPlayer: p.id === selectedPlayer,
@@ -548,43 +718,10 @@
                     role: p.role
                 });
             });
-        } else {
-            // 3v3 — все 6 игроков
-            ids.forEach(id => {
-                const p = PLAYER_DB[id];
-                const rating = getPlayerRating(id);
-                const isTeamA = teamA_ids.includes(id);
-                const data = {
-                    ...p,
-                    isPlayer: p.id === selectedPlayer,
-                    team: isTeamA ? 'A' : 'B',
-                    isGoalkeeper: false,
-                    speed: getPlayerSpeedFromRating(rating) * 1.6,
-                    power: getPlayerPowerFromRating(rating) * 1.4,
-                    rating: rating,
-                    role: p.role
-                };
-                if (isTeamA) teamA_data.push(data);
-                else teamB_data.push(data);
-            });
-        }
-
-        // Назначение вратарей
-        if (teamA_data.length > 0) {
-            const gkA = teamA_data[0];
-            gkA.isGoalkeeper = true;
-            gkA.x = 55;
-            gkA.y = H/2;
-        }
-        if (teamB_data.length > 0) {
-            const gkB = teamB_data[0];
-            gkB.isGoalkeeper = true;
-            gkB.x = W-55;
-            gkB.y = H/2;
         }
 
         // Расстановка позиций для 3v3
-        if (selectedMode === '3v3') {
+        if (selectedMode === '3v3' && selectedTab !== 'division') {
             teamA_data.forEach(p => {
                 if (p.isGoalkeeper) { p.x = 55; p.y = H/2; }
                 else if (p.role === 'defender') { p.x = 120; p.y = H/2; }
@@ -596,16 +733,26 @@
                 else if (p.role === 'attacker') { p.x = W-200; p.y = H/2 - 40; }
             });
         } else {
-            // 2v2
+            // 2v2 или Division
             teamA_data.forEach((p, i) => {
-                p.x = 120;
-                p.y = H/2 + (i === 0 ? -60 : 60);
+                if (selectedTab === 'division') {
+                    if (p.isPlayer) { p.x = 180; p.y = H/2; }
+                    else { p.x = 120; p.y = H/2 + 60; }
+                } else {
+                    p.x = 120;
+                    p.y = H/2 + (i === 0 ? -60 : 60);
+                }
             });
             teamB_data.forEach((p, i) => {
-                p.x = W-120;
-                p.y = H/2 + (i === 0 ? -60 : 60);
+                if (selectedTab === 'division') {
+                    p.x = W-120 + (i * 40);
+                    p.y = H/2 - 60 + (i * 60);
+                } else {
+                    p.x = W-120;
+                    p.y = H/2 + (i === 0 ? -60 : 60);
+                }
             });
-            // Вратарь — первый игрок
+            // Вратарь
             if (teamA_data.length > 0) {
                 const gkA = teamA_data[0];
                 gkA.isGoalkeeper = true;
@@ -620,7 +767,7 @@
             }
         }
 
-        // Если игрок вратарь, делаем его полевым
+        // Если игрок вратарь — делаем полевым
         const myPlayer = [...teamA_data, ...teamB_data].find(p => p.isPlayer);
         if (myPlayer && myPlayer.isGoalkeeper) {
             myPlayer.isGoalkeeper = false;
@@ -665,7 +812,7 @@
             }
         }
         if (target) {
-            const chance = 0.25 + (getPlayerRating(selectedPlayer) - 50) * 0.005;
+            const chance = 0.25 + (getPlayerRating(selectedPlayer, selectedTab) - 50) * 0.005;
             if (Math.random() < chance) {
                 ballOwner = player;
                 ball.x = player.x + 25;
@@ -759,7 +906,6 @@
             p.x = Math.max(35, Math.min(W-35, p.x));
             p.y = Math.max(35, Math.min(H-35, p.y));
         }
-        // Запрет забегания в ворота
         if (!p.isGoalkeeper) {
             if (p.x < goalA.x + goalA.w + 5 && p.y > goalA.y && p.y < goalA.y + goalA.h) {
                 p.x = goalA.x + goalA.w + 5;
@@ -800,7 +946,6 @@
         ctx.shadowColor = 'black';
         ctx.fillText(p.name, x, y - r - 4);
         
-        // Рейтинг (цветной)
         const rating = p.rating || 50;
         let color = '#ff6b6b';
         if (rating >= 80) color = '#4caf50';
@@ -870,7 +1015,6 @@
         ctx.arc(W/2, H/2, 60, 0, Math.PI*2);
         ctx.stroke();
 
-        // Ворота
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 4;
         ctx.strokeRect(goalA.x, goalA.y, goalA.w, goalA.h);
@@ -950,7 +1094,7 @@
             const jx = joystickX, jy = joystickY;
             const dist = Math.sqrt(jx*jx + jy*jy);
             if (dist > 0.1) {
-                const speed = 8 * speedBonus * Math.min(1, dist * 2);
+                const speed = 4.5 * speedBonus * Math.min(1, dist * 2);
                 myPlayer.x += (jx / dist) * speed;
                 myPlayer.y += (jy / dist) * speed;
             }
@@ -1028,7 +1172,6 @@
             }
         }
 
-        // Скруглённые углы
         const cr = 35;
         if (ball.x < cr && ball.y < cr) {
             const dx = ball.x - cr, dy = ball.y - cr;
@@ -1137,62 +1280,64 @@
     function endMatch(winner) {
         matchActive = false;
         gameState = 'ended';
-        if (winner === 'A') {
-            winsA++;
-            winnerDiv.innerHTML = `<span class="cup">🏆</span> Победа команды А!`;
-        } else if (winner === 'B') {
-            winsB++;
-            winnerDiv.innerHTML = `<span class="cup">🏆</span> Победа команды Б!`;
-        } else {
-            if (scoreA > scoreB) {
-                winsA++;
-                winnerDiv.innerHTML = `<span class="cup">🏆</span> Победа команды А!`;
-            } else if (scoreB > scoreA) {
-                winsB++;
-                winnerDiv.innerHTML = `<span class="cup">🏆</span> Победа команды Б!`;
-            } else {
-                winnerDiv.innerHTML = `<span class="cup">🤝</span> Ничья!`;
+        let result = 'draw';
+        if (winner === 'A') { winsA++; result = 'win'; }
+        else if (winner === 'B') { winsB++; result = 'lose'; }
+        else {
+            if (scoreA > scoreB) { winsA++; result = 'win'; }
+            else if (scoreB > scoreA) { winsB++; result = 'lose'; }
+            else { result = 'draw'; }
+        }
+
+        // DIVISION: начисление звёзд и алмазов
+        if (selectedTab === 'division') {
+            let starsGain = 20;
+            let diamondsGain = 0;
+            if (result === 'win') { starsGain = 200; diamondsGain = 5; }
+            else if (result === 'draw') { starsGain = 75; diamondsGain = 2; }
+            division.stars += starsGain;
+            division.diamonds += diamondsGain;
+            saveDivision();
+            updateDivisionUI();
+            // Проверка паков
+            const packsAvailable = Math.floor(division.stars / 300) - division.packsOpened;
+            if (packsAvailable > 0) {
+                showNotification('🎁 У тебя есть пак!', `Открой в меню Division`);
             }
         }
-        winnerDiv.style.display = 'block';
-        restartBtn.style.display = 'block';
-        menuBtn.style.display = 'block';
-        
-        // Карьера: обновляем рейтинг
+
+        // КАРЬЕРА: обновление рейтинга
         if (selectedTab === 'career' && selectedPlayer >= 0) {
             const myPlayer = allPlayers.find(p => p.isPlayer);
             if (myPlayer) {
                 const playerId = myPlayer.id;
                 if (career.playerId === playerId) {
                     let ratingGain = 0;
-                    if (winner === 'A' && myPlayer.team === 'A') ratingGain += 1;
-                    if (winner === 'B' && myPlayer.team === 'B') ratingGain += 1;
-                    ratingGain += Math.floor(scoreA + scoreB) * 0.2;
+                    if (result === 'win') ratingGain += 1;
+                    if (result === 'draw') ratingGain += 0.5;
+                    ratingGain += Math.floor(scoreA + scoreB) * 0.1;
                     if (ratingGain > 0) {
                         career.rating = Math.min(99, career.rating + ratingGain);
-                        career.wins += (winner === 'A' && myPlayer.team === 'A') ? 1 : (winner === 'B' && myPlayer.team === 'B') ? 1 : 0;
+                        career.wins += (result === 'win') ? 1 : 0;
                         career.goals += (myPlayer.team === 'A' ? scoreA : scoreB);
                         saveCareer();
                     }
                 } else {
-                    // Начинаем карьеру за этого игрока
                     career.playerId = playerId;
                     career.rating = PLAYER_DB[playerId].rating;
-                    career.wins = 0;
-                    career.goals = 0;
+                    career.wins = (result === 'win') ? 1 : 0;
+                    career.goals = (myPlayer.team === 'A' ? scoreA : scoreB);
                     career.achievements = [];
-                    if (winner === 'A' && myPlayer.team === 'A') {
-                        career.rating = Math.min(99, career.rating + 1);
-                        career.wins = 1;
-                    } else if (winner === 'B' && myPlayer.team === 'B') {
-                        career.rating = Math.min(99, career.rating + 1);
-                        career.wins = 1;
-                    }
-                    career.goals += (myPlayer.team === 'A' ? scoreA : scoreB);
+                    if (result === 'win') career.rating = Math.min(99, career.rating + 1);
                     saveCareer();
                 }
             }
         }
+
+        winnerDiv.innerHTML = `<span class="cup">🏆</span> ${result === 'win' ? 'Победа!' : result === 'draw' ? 'Ничья!' : 'Поражение!'}`;
+        winnerDiv.style.display = 'block';
+        restartBtn.style.display = 'block';
+        menuBtn.style.display = 'block';
     }
 
     function updateScoreDisplay() {
@@ -1218,6 +1363,13 @@
             startBtn.disabled = true;
             document.querySelectorAll('.diff-btn').forEach(b => b.disabled = true);
             document.querySelectorAll('.player-card').forEach(c => c.classList.remove('selected'));
+            // Показываем Division info
+            if (selectedTab === 'division') {
+                divisionInfo.style.display = 'block';
+                updateDivisionUI();
+            } else {
+                divisionInfo.style.display = 'none';
+            }
             buildPlayerMenu();
         });
     });
@@ -1243,6 +1395,9 @@
         });
     });
 
+    document.getElementById('starPackBtn').addEventListener('click', openStarPack);
+    document.getElementById('diamondPackBtn').addEventListener('click', openDiamondPack);
+
     startBtn.addEventListener('click', function() {
         if (selectedPlayer === -1) return;
         menu.style.display = 'none';
@@ -1257,7 +1412,12 @@
         if (confirm('Сбросить весь прогресс?')) {
             localStorage.removeItem('matchcup_save');
             localStorage.removeItem('matchcup_career');
+            localStorage.removeItem('matchcup_division');
             career = { playerId: null, rating: 50, wins: 0, goals: 0, achievements: [] };
+            division = { stars: 0, diamonds: 0, packsOpened: 0, playerId: null, rating: 50 };
+            saveCareer();
+            saveDivision();
+            updateDivisionUI();
             alert('Прогресс сброшен!');
         }
     });
