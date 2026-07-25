@@ -334,7 +334,7 @@
 
 <script>
     // ============================================================
-    //  MATCH CUP - НОВАЯ ЭРА (УЛУЧШЕННАЯ ФИЗИКА И МОДЕЛЬКИ)
+    //  MATCH CUP — УВЕЛИЧЕННЫЕ ВОРОТА, ЗАПРЕТ ЗАБЕГАНИЯ, СКОРОСТЬ ОТ ЗВЁЗД
     // ============================================================
 
     const canvas = document.getElementById('gameCanvas');
@@ -378,13 +378,13 @@
     let kickPressed = false;
     let tacklePressed = false;
 
-    // --- ИГРОКИ (С МОДЕЛЬКАМИ) ---
+    // --- ИГРОКИ ---
     let allPlayers = [];
     let ball = { x: W/2, y: H/2, r: 10, vx: 0, vy: 0 };
     let ballOwner = null;
 
-    // --- ВОРОТА ---
-    const GOAL_H = 60;
+    // --- ВОРОТА (ЧУТЬ БОЛЬШЕ) ---
+    const GOAL_H = 75; // было 60, стало 75
     const goalA = { x: 25, y: H/2 - GOAL_H/2, w: 18, h: GOAL_H };
     const goalB = { x: W-43, y: H/2 - GOAL_H/2, w: 18, h: GOAL_H };
 
@@ -404,16 +404,13 @@
     const diffPower = { easy: 2.5, medium: 3.5, hard: 4.5, extreme: 5.5 };
     const diffTackle = { easy: 0.2, medium: 0.4, hard: 0.6, extreme: 0.8 };
 
-    // --- РИСОВАНИЕ ИГРОКА (С НОГАМИ) ---
+    // --- РИСОВАНИЕ ИГРОКА ---
     function drawPlayer(p) {
         const isMy = p.isPlayer;
         const x = p.x, y = p.y, r = p.r;
         
-        // Тень
         ctx.shadowColor = 'rgba(0,0,0,0.3)';
         ctx.shadowBlur = 15;
-        
-        // Тело (круг)
         ctx.beginPath();
         ctx.arc(x, y, r, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
@@ -423,7 +420,7 @@
         ctx.lineWidth = isMy ? 3 : 2;
         ctx.stroke();
         
-        // Ноги (две линии внизу)
+        // Ноги
         ctx.strokeStyle = p.color;
         ctx.lineWidth = 4;
         ctx.beginPath();
@@ -435,7 +432,7 @@
         ctx.lineTo(x + 10, y + r + 10);
         ctx.stroke();
         
-        // Глаза (белые точки)
+        // Глаза
         ctx.fillStyle = 'white';
         ctx.beginPath();
         ctx.arc(x - 5, y - 4, 3, 0, Math.PI * 2);
@@ -451,7 +448,7 @@
         ctx.arc(x + 6, y - 3, 1.5, 0, Math.PI * 2);
         ctx.fill();
         
-        // Имя и звёзды
+        // Имя и звёзды (РЕЙТИНГ)
         ctx.fillStyle = 'white';
         ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'center';
@@ -461,14 +458,12 @@
         ctx.fillText(p.name + ' ' + starStr, x, y - r - 12);
         ctx.shadowBlur = 0;
         
-        // Роль
         if (p.isGoalkeeper) {
             ctx.fillStyle = '#ffd700';
             ctx.font = '12px sans-serif';
             ctx.fillText('🧤', x + r + 8, y);
         }
         
-        // Индикатор владения мячом
         if (p === ballOwner) {
             ctx.strokeStyle = 'rgba(255,255,0,0.6)';
             ctx.lineWidth = 3;
@@ -480,7 +475,7 @@
         }
     }
 
-    // --- ИНИЦИАЛИЗАЦИЯ ИГРОКОВ ---
+    // --- ИНИЦИАЛИЗАЦИЯ ---
     function initPlayers() {
         const playerStars = save.stars || 1;
         const botStars = diffStars[selectedDifficulty] || 2;
@@ -644,11 +639,12 @@
         }
     }
 
-    // --- ОБНОВЛЕНИЕ (С УЛУЧШЕННОЙ ФИЗИКОЙ УДАРА) ---
+    // --- ОБНОВЛЕНИЕ ---
     function update() {
         if (gameState !== 'playing' || !matchActive) return;
 
         const myPlayer = allPlayers.find(p => p.isPlayer === true);
+        // СКОРОСТЬ ЗАВИСИТ ОТ ЗВЁЗД
         const speedBonus = 1 + (save.stars - 1) * 0.15;
 
         // Джойстик
@@ -662,6 +658,23 @@
             }
         }
 
+        // ЗАПРЕТ ЗАБЕГАНИЯ В ВОРОТА (для всех полевых)
+        allPlayers.forEach(p => {
+            if (!p.isGoalkeeper) {
+                // Левая штрафная
+                if (p.x < goalA.x + goalA.w + 5 && p.y > goalA.y && p.y < goalA.y + goalA.h) {
+                    p.x = goalA.x + goalA.w + 5;
+                }
+                // Правая штрафная
+                if (p.x > goalB.x - goalB.w - 5 && p.y > goalB.y && p.y < goalB.y + goalB.h) {
+                    p.x = goalB.x - goalB.w - 5;
+                }
+                // Общие границы
+                p.x = Math.max(35, Math.min(W-35, p.x));
+                p.y = Math.max(35, Math.min(H-35, p.y));
+            }
+        });
+
         // Ведение мяча
         if (ballOwner) {
             const targetX = ballOwner.x + 25;
@@ -672,22 +685,14 @@
             ball.vy = 0;
         }
 
-        allPlayers.forEach(p => {
-            if (!p.isGoalkeeper) {
-                p.x = Math.max(35, Math.min(W-35, p.x));
-                p.y = Math.max(35, Math.min(H-35, p.y));
-            }
-        });
-
         // Боты
         allPlayers.filter(p => !p.isPlayer).forEach(p => {
             updateBot(p, p.team === 'A');
         });
 
-        // --- НОВАЯ МЕХАНИКА УДАРА ---
+        // Удар
         if (myPlayer && kickPressed && ballOwner === myPlayer) {
             const angle = Math.atan2(joystickY, joystickX);
-            // Мощный удар (мяч летит далеко и быстро)
             const power = 7 + (save.stars || 1) * 2.0;
             ball.vx = Math.cos(angle) * power * (0.9 + Math.random() * 0.2);
             ball.vy = Math.sin(angle) * power * (0.9 + Math.random() * 0.2);
@@ -701,11 +706,10 @@
             tacklePressed = false;
         }
 
-        // Физика мяча (с трением и отскоками)
+        // Физика мяча
         if (!ballOwner) {
             ball.x += ball.vx;
             ball.y += ball.vy;
-            // Трение
             ball.vx *= 0.99;
             ball.vy *= 0.99;
             if (Math.abs(ball.vx) < 0.1) ball.vx = 0;
@@ -823,7 +827,6 @@
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
-        // Разметка
         ctx.strokeStyle = 'rgba(255,255,255,0.3)';
         ctx.lineWidth = 3;
         const r = 35;
@@ -852,7 +855,7 @@
         ctx.arc(W/2, H/2, 60, 0, Math.PI*2);
         ctx.stroke();
 
-        // Ворота
+        // Ворота (чуть больше)
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 4;
         ctx.strokeRect(goalA.x, goalA.y, goalA.w, goalA.h);
@@ -906,7 +909,7 @@
             drawPlayer(p);
         }
 
-        // Мяч (с бликом)
+        // Мяч
         ctx.shadowColor = 'rgba(0,0,0,0.6)';
         ctx.shadowBlur = 20;
         ctx.beginPath();
@@ -917,7 +920,6 @@
         ctx.strokeStyle = '#111';
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        // Блик
         ctx.beginPath();
         ctx.arc(ball.x-3, ball.y-3, 3, 0, Math.PI*2);
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
