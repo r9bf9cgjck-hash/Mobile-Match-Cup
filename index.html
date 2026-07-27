@@ -758,7 +758,7 @@
             <div id="scoreA">0</div>
             <div id="scoreB">0</div>
         </div>
-        <div id="timer">⏱️ 5:00</div>
+        <div id="timer">⏱️ 1:00</div>
         <div id="currencyBar">
             <span class="stars">⭐ <span id="barStars">50</span></span>
             <span class="diamonds">💎 <span id="barDiamonds">100</span></span>
@@ -778,8 +778,8 @@
 
     <script>
         // ================================================================
-        //  STREET FOOTBALL — ИДЕАЛЬНАЯ ВЕРСИЯ (БЕЗ БАГОВ)
-        //  ВСЁ РАБОТАЕТ: ФИЗИКА, ИИ, КАРЬЕРА, DIVISION, ПАКИ
+        //  STREET FOOTBALL — ФИНАЛЬНАЯ ВЕРСИЯ
+        //  ОТБОР ЛЕГЧЕ, АЛМАЗЫ СЛОЖНЕЕ, РЕЙТИНГ +6 МАКС, 1 МИНУТА
         // ================================================================
 
         const canvas = document.getElementById('gameCanvas');
@@ -789,7 +789,7 @@
         canvas.width = W;
         canvas.height = H;
 
-        // ---------- DOM ЭЛЕМЕНТЫ ----------
+        // ---------- DOM ----------
         const menu = document.getElementById('menu');
         const startBtn = document.getElementById('startBtn');
         const restartBtn = document.getElementById('restartBtn');
@@ -814,14 +814,14 @@
         const notifSub = document.getElementById('notifSub');
         const inventoryGrid = document.getElementById('inventory-grid');
 
-        // ---------- СОСТОЯНИЕ ИГРЫ ----------
+        // ---------- СОСТОЯНИЕ ----------
         let selectedPlayer = -1;
         let selectedDifficulty = 'easy';
         let selectedMode = '2v2';
         let gameState = 'menu';
         let matchActive = false;
         let timerInterval = null;
-        let timeLeft = 300;
+        let timeLeft = 60;
         let scoreA = 0,
             scoreB = 0;
         const GOAL_LIMIT = 10;
@@ -936,6 +936,7 @@
 
         function getPower(rating) { return 2.8 + (rating - 50) * 0.057; }
 
+        // ---------- МЕНЮ ----------
         function buildPlayerMenu() {
             const list = document.getElementById('player-list');
             list.innerHTML = '';
@@ -961,6 +962,57 @@
             });
         }
 
+        // ---------- КАРЬЕРА ----------
+        function buildCareerMenu() {
+            const list = document.getElementById('career-player-list');
+            list.innerHTML = '';
+            const ids = [0, 1, 2, 3, 4, 5];
+            ids.forEach(id => {
+                const p = PLAYER_DB[id];
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.dataset.player = p.id;
+                card.innerHTML = `
+                    <span class="number">#${p.number}</span>
+                    <span class="name">${p.name}</span>
+                    <span class="rating">${p.rating}</span>
+                `;
+                card.addEventListener('click', function() {
+                    document.querySelectorAll('#career-player-list .player-card').forEach(c => c.classList.remove(
+                    'selected'));
+                    this.classList.add('selected');
+                    document.getElementById('careerStartBtn').disabled = false;
+                });
+                list.appendChild(card);
+            });
+        }
+
+        // ---------- DIVISION ----------
+        function buildDivisionMenu() {
+            const list = document.getElementById('division-player-list');
+            list.innerHTML = '';
+            const ids = [0, 1, 2, 3, 4, 5];
+            ids.forEach(id => {
+                const p = PLAYER_DB[id];
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.dataset.player = p.id;
+                card.innerHTML = `
+                    <span class="number">#${p.number}</span>
+                    <span class="name">${p.name}</span>
+                    <span class="rating">${p.rating}</span>
+                `;
+                card.addEventListener('click', function() {
+                    document.querySelectorAll('#division-player-list .player-card').forEach(c => c.classList.remove(
+                        'selected'));
+                    this.classList.add('selected');
+                    document.getElementById('divisionStartBtn').disabled = false;
+                });
+                list.appendChild(card);
+            });
+        }
+
+        // ---------- ИНИЦИАЛИЗАЦИЯ ----------
         function initPlayers() {
             const teamA_ids = [0, 1, 5];
             const teamB_ids = [2, 3, 4];
@@ -1059,6 +1111,7 @@
             ballController = closest;
         }
 
+        // ---------- БОТЫ ----------
         function updateBot(p, isTeamA) {
             const dx = ball.x - p.x;
             const dy = ball.y - p.y;
@@ -1153,6 +1206,7 @@
             }
         }
 
+        // ---------- РИСОВАНИЕ ----------
         function drawPlayer(p) {
             const isMy = p.isPlayer;
             const x = p.x,
@@ -1261,6 +1315,7 @@
             ctx.fill();
         }
 
+        // ---------- ОБНОВЛЕНИЕ ----------
         function update() {
             if (gameState !== 'playing' || !matchActive) return;
 
@@ -1343,6 +1398,7 @@
                     }
                 }
 
+                // --- ОТБОР (ЧУТЬ ЛЕГЧЕ) ---
                 if (tacklePressed) {
                     let target = null;
                     let minDist = 75;
@@ -1359,7 +1415,7 @@
                         }
                     }
                     if (target) {
-                        const chance = 0.3 + (myPlayer.rating - 50) * 0.005 - (selectedDifficulty === 'extreme' ? 0.15 :
+                        const chance = 0.45 + (myPlayer.rating - 50) * 0.005 - (selectedDifficulty === 'extreme' ? 0.1 :
                             0);
                         if (Math.random() < chance) {
                             ballController = myPlayer;
@@ -1492,7 +1548,7 @@
                     resetBall();
                     showNotification('⚽ ГОЛ!', 'Команда Б забила!');
                     stars += 25;
-                    diamonds += 4;
+                    diamonds += 3;
                     saveProgress();
                     updateUI();
                 } else {
@@ -1508,7 +1564,7 @@
                     resetBall();
                     showNotification('⚽ ГОЛ!', 'Команда А забила!');
                     stars += 25;
-                    diamonds += 4;
+                    diamonds += 3;
                     saveProgress();
                     updateUI();
                 } else {
@@ -1521,15 +1577,16 @@
             ball.y = Math.max(ball.r, Math.min(H - ball.r, ball.y));
         }
 
+        // ---------- ТАЙМЕР (1 МИНУТА) ----------
         function startMatch() {
             if (matchActive) return;
             matchActive = true;
             gameState = 'playing';
-            timeLeft = 300;
+            timeLeft = 60;
             scoreA = 0;
             scoreB = 0;
             updateScoreDisplay();
-            timerDiv.innerText = '⏱️ 5:00';
+            timerDiv.innerText = '⏱️ 1:00';
             winnerDiv.style.display = 'none';
             restartBtn.style.display = 'none';
             menuBtn.style.display = 'none';
@@ -1548,6 +1605,7 @@
             }, 1000);
         }
 
+        // ---------- КОНЕЦ МАТЧА (АЛМАЗЫ СЛОЖНЕЕ) ----------
         function endMatch(winner) {
             matchActive = false;
             gameState = 'ended';
@@ -1560,12 +1618,20 @@
                 else result = 'draw';
             }
 
-            if (result === 'win') { stars += 150;
-                diamonds += 20;
-                rank = Math.min(99, rank + 3); } else if (result === 'draw') { stars += 50;
-                diamonds += 8;
-                rank = Math.min(99, rank + 1); } else { stars += 15;
-                diamonds += 2; }
+            // Награды (алмазы сложнее)
+            if (result === 'win') {
+                stars += 100;
+                diamonds += 3;
+                const gain = 1 + Math.floor(Math.random() * 3);
+                rank = Math.min(99, rank + gain);
+            } else if (result === 'draw') {
+                stars += 30;
+                diamonds += 1;
+                rank = Math.min(99, rank + 1);
+            } else {
+                stars += 5;
+                diamonds += 0;
+            }
             saveProgress();
             updateUI();
 
@@ -1582,12 +1648,14 @@
             matchScoreDiv.innerText = `⚽ Счёт матча: ${scoreA} : ${scoreB}`;
         }
 
+        // ---------- ЦИКЛ ----------
         function loop() {
             update();
             draw();
             requestAnimationFrame(loop);
         }
 
+        // ---------- СОБЫТИЯ ----------
         document.querySelectorAll('.menu-tab').forEach(el => {
             el.addEventListener('click', function() {
                 document.querySelectorAll('.menu-tab').forEach(b => b.classList.remove('active'));
@@ -1616,6 +1684,37 @@
         document.getElementById('starPackBtn').addEventListener('click', () => openPack('star'));
         document.getElementById('diamondPackBtn').addEventListener('click', () => openPack('diamond'));
 
+        // ---------- КАРЬЕРА ----------
+        document.getElementById('careerStartBtn').addEventListener('click', function() {
+            const selected = document.querySelector('#career-player-list .player-card.selected');
+            if (!selected) return;
+            const id = parseInt(selected.dataset.player);
+            selectedPlayer = id;
+            menu.style.display = 'none';
+            joystickArea.style.display = 'block';
+            kickBtn.style.display = 'flex';
+            passBtn.style.display = 'flex';
+            tackleBtn.style.display = 'flex';
+            initPlayers();
+            startMatch();
+        });
+
+        // ---------- DIVISION ----------
+        document.getElementById('divisionStartBtn').addEventListener('click', function() {
+            const selected = document.querySelector('#division-player-list .player-card.selected');
+            if (!selected) return;
+            const id = parseInt(selected.dataset.player);
+            selectedPlayer = id;
+            menu.style.display = 'none';
+            joystickArea.style.display = 'block';
+            kickBtn.style.display = 'flex';
+            passBtn.style.display = 'flex';
+            tackleBtn.style.display = 'flex';
+            initPlayers();
+            startMatch();
+        });
+
+        // ---------- ОСНОВНАЯ ИГРА ----------
         startBtn.addEventListener('click', function() {
             if (selectedPlayer === -1) return;
             menu.style.display = 'none';
@@ -1650,6 +1749,7 @@
                 timerInterval = null; }
         });
 
+        // ---------- ДЖОЙСТИК ----------
         joystickArea.addEventListener('touchstart', (e) => {
             e.preventDefault();
             const touch = e.touches[0];
@@ -1704,6 +1804,7 @@
             }
         }
 
+        // ---------- КНОПКИ ----------
         kickBtn.addEventListener('touchstart', (e) => { e.preventDefault();
             kickPressed = true; }, { passive: false });
         kickBtn.addEventListener('touchend', () => { kickPressed = false; });
@@ -1719,8 +1820,11 @@
         tackleBtn.addEventListener('touchend', () => { tacklePressed = false; });
         tackleBtn.addEventListener('touchcancel', () => { tacklePressed = false; });
 
+        // ---------- СТАРТ ----------
         loadProgress();
         buildPlayerMenu();
+        buildCareerMenu();
+        buildDivisionMenu();
         updateUI();
         loop();
     </script>
