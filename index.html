@@ -779,7 +779,7 @@
     <script>
         // ================================================================
         //  STREET FOOTBALL — ФИНАЛЬНАЯ ВЕРСИЯ
-        //  ОТБОР ЛЕГЧЕ, АЛМАЗЫ СЛОЖНЕЕ, РЕЙТИНГ +6 МАКС, 1 МИНУТА
+        //  ИСПРАВЛЕН: 2×2, ПЕРЕХВАТ, САЛАУДИН В КОМАНДЕ Б
         // ================================================================
 
         const canvas = document.getElementById('gameCanvas');
@@ -843,6 +843,7 @@
         const goalA = { x: 15, y: H / 2 - GOAL_H / 2, w: 16, h: GOAL_H };
         const goalB = { x: W - 31, y: H / 2 - GOAL_H / 2, w: 16, h: GOAL_H };
 
+        // ---------- ИГРОКИ (САЛАУДИН В КОМАНДЕ Б) ----------
         const PLAYER_DB = {
             0: { id: 0, name: 'Хабиб', number: '7', color: '#e53935', rating: 72, role: 'attacker', team: 'A' },
             1: { id: 1, name: 'Азиз', number: '10', color: '#ff7043', rating: 70, role: 'attacker', team: 'A' },
@@ -962,7 +963,6 @@
             });
         }
 
-        // ---------- КАРЬЕРА ----------
         function buildCareerMenu() {
             const list = document.getElementById('career-player-list');
             list.innerHTML = '';
@@ -987,7 +987,6 @@
             });
         }
 
-        // ---------- DIVISION ----------
         function buildDivisionMenu() {
             const list = document.getElementById('division-player-list');
             list.innerHTML = '';
@@ -1012,10 +1011,17 @@
             });
         }
 
-        // ---------- ИНИЦИАЛИЗАЦИЯ ----------
+        // ---------- ИНИЦИАЛИЗАЦИЯ (2×2 И 3×3) ----------
         function initPlayers() {
-            const teamA_ids = [0, 1, 5];
-            const teamB_ids = [2, 3, 4];
+            let teamA_ids, teamB_ids;
+            if (selectedMode === '2v2') {
+                teamA_ids = [0, 1];
+                teamB_ids = [2, 4];
+            } else {
+                teamA_ids = [0, 1, 5];
+                teamB_ids = [2, 3, 4];
+            }
+
             let teamA_data = [],
                 teamB_data = [];
 
@@ -1044,6 +1050,7 @@
                 else teamB_data.push(data);
             });
 
+            // Расстановка
             const spacingA = 280 / (teamA_data.length + 1);
             const spacingB = 280 / (teamB_data.length + 1);
             teamA_data.forEach((p, i) => {
@@ -1150,6 +1157,7 @@
                         targetY = ball.y;
                     }
 
+                    // ОТБОР ТОЛЬКО ЕСЛИ РЯДОМ (НЕ С ДАЛЕКА)
                     if (ballController && distToBall < 48 && Math.random() < (selectedDifficulty === 'extreme' ? 0.35 :
                             0.18)) {
                         ballController = p;
@@ -1398,10 +1406,10 @@
                     }
                 }
 
-                // --- ОТБОР (ЧУТЬ ЛЕГЧЕ) ---
+                // ОТБОР (ТОЛЬКО РЯДОМ)
                 if (tacklePressed) {
                     let target = null;
-                    let minDist = 75;
+                    let minDist = 60;
                     for (let p of allPlayers) {
                         if (p === myPlayer || p.team === myPlayer.team) continue;
                         if (ballController === p) {
@@ -1415,7 +1423,7 @@
                         }
                     }
                     if (target) {
-                        const chance = 0.45 + (myPlayer.rating - 50) * 0.005 - (selectedDifficulty === 'extreme' ? 0.1 :
+                        const chance = 0.5 + (myPlayer.rating - 50) * 0.005 - (selectedDifficulty === 'extreme' ? 0.1 :
                             0);
                         if (Math.random() < chance) {
                             ballController = myPlayer;
@@ -1577,7 +1585,7 @@
             ball.y = Math.max(ball.r, Math.min(H - ball.r, ball.y));
         }
 
-        // ---------- ТАЙМЕР (1 МИНУТА) ----------
+        // ---------- ТАЙМЕР ----------
         function startMatch() {
             if (matchActive) return;
             matchActive = true;
@@ -1605,7 +1613,7 @@
             }, 1000);
         }
 
-        // ---------- КОНЕЦ МАТЧА (АЛМАЗЫ СЛОЖНЕЕ) ----------
+        // ---------- КОНЕЦ МАТЧА ----------
         function endMatch(winner) {
             matchActive = false;
             gameState = 'ended';
@@ -1618,7 +1626,6 @@
                 else result = 'draw';
             }
 
-            // Награды (алмазы сложнее)
             if (result === 'win') {
                 stars += 100;
                 diamonds += 3;
